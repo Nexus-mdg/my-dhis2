@@ -33,7 +33,7 @@ printf '%s\n' "${conf[@]}" >> /opt/dhis2/dhis.conf
 chmod 0600 /opt/dhis2/dhis.conf
 
 if [ -z "${ENCRYPTED}" ]; then
-  RND="uid-"$RANDOM"-"$RANDOM"-"$RANDOM"-"$RANDOM
+  RND=uid-$RANDOM-$RANDOM-$RANDOM-$RANDOM
   keytool -genkey -keyalg RSA -noprompt -alias "$RND" -dname "CN=localhost, OU=NA, O=NA, L=NA, S=NA, C=NA" -keystore /opt/tomcat/keystore.jks -validity 36500 -storepass "$RND" -keypass "$RND"
   openssl req -x509 -newkey rsa:4096 -keyout /opt/tomcat/localhost-rsa-key.pem -out /opt/tomcat/localhost-rsa-cert.pem -days 36500 -passout pass:"$RND" -subj "/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost"
   cp -Rf /tmp/tomcat-conf "$CATALINA_HOME"/conf/
