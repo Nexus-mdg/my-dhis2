@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 set -e
 
+
+if [ -f /run/secrets/credentials ]; then
+  FILE="/run/secrets/credentials"
+  echo "Found credentials file"
+  username=$(awk 'NR==1{print $2}' ${FILE})
+  password=$(awk 'NR==2{print $2}' ${FILE})
+  encryption_key=$(awk 'NR==3{print $2}' ${FILE})
+else
+  username="dhis"
+  password="dhis"
+  encryption_key="abcdefghijklmnopqrstuvwxyz0123456789@@"
+fi
+
+
 if [[ "${USE_OPEN_JDK}" == *"8"* ]]; then
   export JAVA_HOME=$JAVA8_DIR
 else
@@ -43,19 +57,9 @@ else
   conf+=("connection.url = jdbc:postgresql://$DB_HOST/$DB_NAME")
 fi
 
-if [ -f /run/secrets/credentials ]; then
-    FILE="/run/secrets/credentials"
-    echo "Found credentials file"
-
-    conf+=("connection.username = $(awk 'NR==1{print $1}' ${FILE})")
-    conf+=("connection.password = $(awk 'NR==2{print $1}' ${FILE})")
-    conf+=("encryption.password = $(awk 'NR==3{print $1}' ${FILE})")
-else
-    echo -e "\031[37;44mSecret file not found, using random default credentials (dangerous)\033[0m"
-    conf+=("connection.username = dhis")
-    conf+=("connection.password = dhis")
-    conf+=("encryption.password = abcdefghijklmnopqrstuvwxyz0123456789@@")
-fi
+conf+=("connection.username = $username")
+conf+=("connection.password = $password")
+conf+=("encryption.password = $encryption_key")
 
 printf '%s\n' "${conf[@]}" >> /opt/dhis2/dhis.conf
 chmod 0600 /opt/dhis2/dhis.conf

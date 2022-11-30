@@ -30,7 +30,7 @@ services:
     ports:
       - "8081:8080"
     depends_on:
-      - db
+      - dhis2
 
   dhis2:
     container_name: dhis2
@@ -38,6 +38,7 @@ services:
     tty: true
     environment:
       ENCRYPTED: "TRUE"
+      MODE: "FULL-DEV"
       TIMEZONE: "Indian/Antananarivo"
       DB_HOST: "db"
       DB_PORT: "5432"
@@ -48,7 +49,7 @@ services:
     volumes:
       - "fileResource:/opt/dhis2/files"
       - "logs:/opt/dhis2/logs"
-      - "./credentials:/run/secrets/credentials"
+      - "./credentials-demo:/run/secrets/credentials"
     ports:
       - "8080:8080"
       - "8443:8443"
