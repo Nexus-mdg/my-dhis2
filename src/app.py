@@ -34,13 +34,6 @@ async def start(request):
     response = shell(["catalina.sh run"])
     return PlainTextResponse(response)
 
-
-async def restart(request):
-    shell(["catalina.sh stop"])
-    response = shell(["catalina.sh run"])
-    return PlainTextResponse(response)
-
-
 async def stop_tomcat(request):
     response = shell(["catalina.sh stop"])
     return PlainTextResponse(response)
@@ -69,7 +62,6 @@ async def test_dhis2_endpoint(request):
 routes = [
     Route('/', endpoint=welcome_home, methods=['GET']),
     Route('/start', endpoint=start, methods=['GET']),
-    Route('/restart', endpoint=restart, methods=['GET']),
     Route('/stop', endpoint=stop_tomcat, methods=['GET']),
     Route('/truncate', endpoint=truncate_database, methods=['GET']),
     Route('/version', endpoint=get_tomcat_version, methods=['GET']),
