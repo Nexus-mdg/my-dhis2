@@ -1,0 +1,61 @@
+version: '3.9'
+
+
+services:
+
+  sharer:
+    container_name: sharer
+    image: asouhei/snis-filesharer
+    tty: true
+    volumes:
+      - "/home/toavina/Apps/Installers:/share"
+    ports:
+      - "8000:8000"
+
+  db:
+    container_name: db
+    image: postgis/postgis:12-3.3
+    environment:
+      POSTGRES_USER: dhis
+      POSTGRES_PASSWORD: dhis
+      POSTGRES_DB: dhis2
+#    volumes:
+#      - "postgresql_data:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+
+  adminer:
+    container_name: adminer
+    image: adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+
+  dhis2:
+    container_name: dhis2
+    image: subvers.dhis2:latest
+    tty: true
+    environment:
+      ENCRYPTED: "TRUE"
+      TIMEZONE: "Indian/Antananarivo"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      DB_NAME: "dhis2"
+      USE_OPEN_JDK: "11"
+      DHIS2_WARFILE_URL: "http://sharer:8000/dhis2.war"
+      JAVA_OPTS: "-Xmx3000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
+    volumes:
+      - "fileResource:/opt/dhis2/files"
+      - "logs:/opt/dhis2/logs"
+      - "./credentials:/run/secrets/credentials"
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    depends_on:
+      - db
+
+volumes:
+  fileResource:
+  logs:
+  postgresql_data:
