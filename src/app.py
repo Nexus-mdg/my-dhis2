@@ -30,18 +30,18 @@ async def welcome_home(request):
 
 
 async def start(request):
-    response = shell(["catalina.sh", "run"])
+    response = shell(["catalina.sh run"])
     return PlainTextResponse(response)
 
 
 async def restart(request):
-    shell(["catalina.sh", "stop"])
-    response = shell(["catalina.sh", "run"])
+    shell(["catalina.sh stop"])
+    response = shell(["catalina.sh run"])
     return PlainTextResponse(response)
 
 
 async def stop_tomcat(request):
-    response = shell(["catalina.sh", "stop"])
+    response = shell(["catalina.sh stop"])
     return PlainTextResponse(response)
 
 
