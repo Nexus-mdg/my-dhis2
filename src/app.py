@@ -51,12 +51,18 @@ async def truncate_database(request):
     return PlainTextResponse(response)
 
 
+async def get_tomcat_version(request):
+    response = shell(["catalina.sh version"])
+    return PlainTextResponse(response)
+
+
 routes = [
     Route('/', endpoint=welcome_home, methods=['GET']),
     Route('/start', endpoint=start, methods=['GET']),
     Route('/restart', endpoint=restart, methods=['GET']),
     Route('/stop', endpoint=stop_tomcat, methods=['GET']),
     Route('/truncate', endpoint=truncate_database, methods=['GET']),
+    Route('/version', endpoint=get_tomcat_version, methods=['GET']),
 ]
 
 app = Starlette(debug=False, routes=routes, on_startup=[main])

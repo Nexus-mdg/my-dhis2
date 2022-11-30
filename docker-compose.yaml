@@ -45,6 +45,13 @@ services:
       DB_NAME: "dhis2"
       USE_OPEN_JDK: "11"
       DHIS2_WARFILE_URL: "http://sharer:8000/dhis2.war"
+      MIN_MEMORY: "512m"
+      MAX_MEMORY: "3000m"
+      ENCODING: "UTF-8"
+      ENDPOINT: "YES"
+      CAPTURE_DATA_CHANGE: "YES"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
       JAVA_OPTS: "-Xmx3000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
     volumes:
       - "fileResource:/opt/dhis2/files"
