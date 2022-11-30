@@ -63,7 +63,7 @@ async def test_dhis2_endpoint(request):
     else:
         url = "http://localhost:8080/dhis-web-commons/security/login.action"
     response = requests.get(url, verify=False)
-    return PlainTextResponse(str(response.status_code))
+    return JSONResponse({"dhis2_check_message": str(response.status_code)})
 
 
 routes = [
