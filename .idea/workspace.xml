@@ -6,8 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="8af00fd9-7008-4681-a01b-8428248dea94" name="Changes" comment="Running Python with DHIS2">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Pipfile" beforeDir="false" afterPath="$PROJECT_DIR$/Pipfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Pipfile.lock" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -178,7 +178,7 @@
       <workItem from="1669780396427" duration="8436000" />
       <workItem from="1669792915995" duration="14597000" />
       <workItem from="1669808984562" duration="28000" />
-      <workItem from="1669811397225" duration="2147000" />
+      <workItem from="1669811397225" duration="2610000" />
     </task>
     <task id="LOCAL-00001" summary="basecode written">
       <created>1669700999626</created>
@@ -250,7 +250,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669808813439</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="Running Python with DHIS2">
+      <created>1669821752281</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1669821752281</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

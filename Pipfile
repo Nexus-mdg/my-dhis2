@@ -5,9 +5,8 @@ name = "pypi"
 
 [packages]
 requests = "==2.27.*"
-starlette = "*"
-uvicorn = "*"
-urllib3 = "*"
+starlette = "==0.22.0"
+uvicorn = "==0.20.0"
 
 [dev-packages]
 
