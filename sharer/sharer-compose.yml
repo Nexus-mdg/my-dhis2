@@ -1,0 +1,13 @@
+version: '3.9'
+
+
+services:
+
+  sharer:
+    container_name: sharer
+    image: asouhei/snis-filesharer
+    tty: true
+    volumes:
+      - "/home/toavina/Apps/Installers:/share"
+    ports:
+      - "8000:8000"

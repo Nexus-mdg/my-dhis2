@@ -34,26 +34,26 @@ services:
 
   dhis2:
     container_name: dhis2
-    image: localhost:5000/dhis2
+    image: subvers.dhis2:latest
     tty: true
     environment:
-      ENCRYPTED: TRUE
+      ENCRYPTED: "TRUE"
       TIMEZONE: Indian/Antananarivo
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: dhis2
       DHIS2_WARFILE_URL: "http://sharer:8000/dhis2.war"
+      JAVA_OPTS: "-Xmx3000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
 #    volumes:
-#      - "fileRessource:/opt/dhis2/files"
+#      - "fileResource:/opt/dhis2/files"
 #      - "logs:/opt/dhis2/logs"
     ports:
       - "8080:8080"
       - "8443:8443"
     depends_on:
-      - sharer
       - db
 
 volumes:
-  fileRessource:
+  fileResource:
   logs:
   postgresql_data:

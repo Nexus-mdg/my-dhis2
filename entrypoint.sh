@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+printenv
+
 # setup timezone (create env)
 if [ -z "${TIMEZONE}" ]; then
   export TZ=$TIMEZONE
@@ -9,13 +11,18 @@ fi
 
 declare -a conf=()
 
-[ -z "${ENCRYPTED}" ] && conf+=("server.https = on") || conf+=("server.https = off")
-[ -z "${ENCRYPTED}" ] && conf+=("server.http.port = 8443") || conf+=("server.http.port = 8080")
+[ "${ENCRYPTED}" == "TRUE" ] && conf+=("server.https = on") || conf+=("server.https = off")
+[ "${ENCRYPTED}" == "TRUE" ] && conf+=("server.http.port = 8443") || conf+=("server.http.port = 8080")
 conf+=("analytics.cache.expiration = 3600")
 conf+=("connection.dialect = org.hibernate.dialect.PostgresSQLDialect")
 conf+=("connection.driver_class = org.postgresql.Driver")
 conf+=("connection.schema = update")
-conf+=("connection.url = jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME")
+
+if [ -z "${DB_PORT}" ]; then
+  conf+=("connection.url = jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME")
+else
+  conf+=("connection.url = jdbc:postgresql://$DB_HOST/$DB_NAME")
+fi
 
 if [ -f /run/secrets/credentials ]; then
     FILE="/run/secrets/credentials"
@@ -32,7 +39,7 @@ fi
 printf '%s\n' "${conf[@]}" >> /opt/dhis2/dhis.conf
 chmod 0600 /opt/dhis2/dhis.conf
 
-if [ -z "${ENCRYPTED}" ]; then
+if [ "${ENCRYPTED}" == "TRUE" ]; then
   echo "Encryption is set !"
   RND=uid-$RANDOM-$RANDOM-$RANDOM-$RANDOM
   keytool -genkey -keyalg RSA -noprompt -alias "$RND" -dname "CN=localhost, OU=NA, O=NA, L=NA, S=NA, C=NA" -keystore /opt/tomcat/keystore.jks -validity 36500 -storepass "$RND" -keypass "$RND"
@@ -44,12 +51,8 @@ else
   cp -f /tmp/tomcat-conf-http/* "$CATALINA_HOME"/conf/
 fi
 
-if [ -z "${DHIS2_WARFILE_URL}" ]; then
-  curl  -o "$CATALINA_HOME"/webapps/ROOT.war "$DHIS2_WARFILE_URL"
-else
-  echo "defaulting to DHIS2 2.39.0"
-  curl  -o "$CATALINA_HOME"/webapps/ROOT.war "https://releases.dhis2.org/2.39/dhis2-stable-2.39.0.war"
-fi
+echo "Downloading DHIS2 warfile at $DHIS2_WARFILE_URL"
+curl  -o "$CATALINA_HOME"/webapps/ROOT.war "$DHIS2_WARFILE_URL"
 
 cd /
 

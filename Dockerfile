@@ -23,10 +23,11 @@ RUN mkdir /opt/dhis2/
 RUN mkdir /tmp/tomcat-conf
 RUN mkdir /pkg
 
-RUN wget -O /pkg/openjdk8.tar.gz "http://172.17.0.1:8000/openjdk-8u40-b25-linux-x64-10_feb_2015.tar.gz"
-RUN tar -zxvf /pkg/openjdk8.tar.gz -C /opt/java
+RUN wget -O /pkg/openjdk.tar.gz "http://172.17.0.1:8000/jdk-11.tar.gz"
+RUN tar -zxvf /pkg/openjdk.tar.gz -C /opt/java
 
-ENV JAVA_HOME="/opt/java/java-se-8u40-ri"
+#ENV JAVA_HOME="/opt/java/java-se-8u40-ri"
+ENV JAVA_HOME="/opt/java/jdk-11"
 ENV PATH $PATH:$JAVA_HOME/bin
 # Important
 ENV JAVA_OPTS "$OPTS"

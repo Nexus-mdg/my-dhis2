@@ -4,14 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8af00fd9-7008-4681-a01b-8428248dea94" name="Changes" comment="fix">
-      <change afterPath="$PROJECT_DIR$/docker-compose.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tomcatconf-http/server.xml" afterDir="false" />
+    <list default="true" id="8af00fd9-7008-4681-a01b-8428248dea94" name="Changes" comment="$ENCRYPTED not found by entrypoint.sh">
+      <change afterPath="$PROJECT_DIR$/sharer/sharer-compose.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/entrypoint.sh" beforeDir="false" afterPath="$PROJECT_DIR$/entrypoint.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tomcatconf/server.xml" beforeDir="false" afterPath="$PROJECT_DIR$/tomcatconf-https/server.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tomcatconf/web.xml" beforeDir="false" afterPath="$PROJECT_DIR$/tomcatconf-https/web.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,21 +39,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "/home/toavina/AquaProjects/subversion/dhis2/tomcatconf-http",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/toavina/AquaProjects/subversion/dhis2/tomcatconf-http&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/tomcatconf-http" />
@@ -77,6 +75,15 @@
       </deployment>
       <method v="2" />
     </configuration>
+    <configuration name="SHARER" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="envFilePath" value="" />
+          <option name="sourceFilePath" value="sharer-compose.yml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
     <configuration name="TEST COMPOSE" type="docker-deploy" factoryName="docker-compose.yml" server-name="Docker">
       <deployment type="docker-compose.yml">
         <settings>
@@ -86,10 +93,47 @@
       </deployment>
       <method v="2" />
     </configuration>
+    <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
+      <deployment type="docker-compose.yml">
+        <settings />
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration name="docker-compose.yaml.sharer: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="services">
+            <list>
+              <option value="sharer" />
+            </list>
+          </option>
+          <option name="sourceFilePath" value="docker-compose.yaml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration name="sharer/sharer-compose.yml: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="sourceFilePath" value="sharer/sharer-compose.yml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Docker.TEST COMPOSE" />
       <item itemvalue="Docker.BUILD" />
+      <item itemvalue="Docker.sharer/sharer-compose.yml: Compose Deployment" />
+      <item itemvalue="Docker.SHARER" />
+      <item itemvalue="Docker.docker-compose.yaml.sharer: Compose Deployment" />
     </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Docker.sharer/sharer-compose.yml: Compose Deployment" />
+        <item itemvalue="Docker.SHARER" />
+        <item itemvalue="Docker.docker-compose.yaml.sharer: Compose Deployment" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -106,7 +150,9 @@
       <workItem from="1669693812896" duration="5265000" />
       <workItem from="1669699908264" duration="3829000" />
       <workItem from="1669727965218" duration="27000" />
-      <workItem from="1669733303572" duration="3712000" />
+      <workItem from="1669733303572" duration="4124000" />
+      <workItem from="1669778946294" duration="1368000" />
+      <workItem from="1669780396427" duration="3391000" />
     </task>
     <task id="LOCAL-00001" summary="basecode written">
       <created>1669700999626</created>
@@ -122,7 +168,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669701076588</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="$ENCRYPTED not found by entrypoint.sh">
+      <created>1669737358596</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1669737358596</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -142,6 +195,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="basecode written" />
     <MESSAGE value="fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix" />
+    <MESSAGE value="$ENCRYPTED not found by entrypoint.sh" />
+    <option name="LAST_COMMIT_MESSAGE" value="$ENCRYPTED not found by entrypoint.sh" />
   </component>
 </project>
