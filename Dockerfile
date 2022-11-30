@@ -10,6 +10,8 @@ RUN apt -y update && \
             libapr1-dev \
             libssl-dev \
             build-essential \
+            python3 \
+            python3-pip \
             fontconfig
 
 
@@ -66,7 +68,7 @@ COPY tomcatconf-http/ /tmp/tomcat-conf-http/
 
 ENV DHIS2_HOME="/opt/dhis2/"
 
-EXPOSE 8080 8443
+EXPOSE 8080 8443 18800
 
 # Install postgres client
 RUN apt-get install -y postgresql-client
@@ -74,9 +76,21 @@ RUN apt-get install -y postgresql-client
 # Policy
 COPY /policy /policy
 
+# Python
+ENV PYTHONDONTWRITEBYTECODE=1
+COPY /src /src
+COPY Pipfile /src/Pipfile
+COPY Pipfile.lock /src/Pipfile.lock
+WORKDIR /src
+RUN pip3 install pipenv && pipenv install --dev --system --deploy
+
+
 # Entrypoint
 WORKDIR /pkg
 ENTRYPOINT ["/tmp/entrypoint.sh"]
 
-# RUN Tomcat
-CMD ["catalina.sh", "run"]
+# Starting
+COPY start.sh /start.sh
+RUN chmod 755 /start.sh
+CMD ["/start.sh"]
+

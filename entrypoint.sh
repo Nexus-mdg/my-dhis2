@@ -23,6 +23,10 @@ fi
 
 PATH=$PATH:"$JAVA_HOME"/bin
 
+# save JAVA_HOME in conf file
+touch "$CATALINA_HOME"/bin/setenv.sh
+echo "export JAVA_HOME=$JAVA_HOME" >> "$CATALINA_HOME"/bin/setenv.sh
+
 # set up policy for java
 if [[ "${JAVA_HOME}" == *"8"* ]]; then
   echo "Attempting to install JCE for Java 8"
@@ -80,5 +84,7 @@ echo "Downloading DHIS2 warfile at $DHIS2_WARFILE_URL"
 curl  -o "$CATALINA_HOME"/webapps/ROOT.war "$DHIS2_WARFILE_URL"
 
 cd /
+
+sh -c /src/app.sh
 
 exec "$@"
