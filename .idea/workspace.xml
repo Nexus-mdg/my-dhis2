@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8af00fd9-7008-4681-a01b-8428248dea94" name="Changes" comment="$ENCRYPTED not found by entrypoint.sh">
-      <change afterPath="$PROJECT_DIR$/sharer/sharer-compose.yml" afterDir="false" />
+    <list default="true" id="8af00fd9-7008-4681-a01b-8428248dea94" name="Changes" comment="Java 11 tag &gt; OK">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/entrypoint.sh" beforeDir="false" afterPath="$PROJECT_DIR$/entrypoint.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,7 +23,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="master" />
+        <entry key="$PROJECT_DIR$" value="test-jdk-11" />
       </map>
     </option>
   </component>
@@ -129,9 +126,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Docker.docker-compose.yaml.sharer: Compose Deployment" />
+        <item itemvalue="Docker.SHARER" />
+        <item itemvalue="Docker.sharer/sharer-compose.yml: Compose Deployment" />
         <item itemvalue="Docker.sharer/sharer-compose.yml: Compose Deployment" />
         <item itemvalue="Docker.SHARER" />
-        <item itemvalue="Docker.docker-compose.yaml.sharer: Compose Deployment" />
       </list>
     </recent_temporary>
   </component>
@@ -152,7 +151,7 @@
       <workItem from="1669727965218" duration="27000" />
       <workItem from="1669733303572" duration="4124000" />
       <workItem from="1669778946294" duration="1368000" />
-      <workItem from="1669780396427" duration="3391000" />
+      <workItem from="1669780396427" duration="3559000" />
     </task>
     <task id="LOCAL-00001" summary="basecode written">
       <created>1669700999626</created>
@@ -175,7 +174,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669737358596</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Java 11 tag &gt; OK">
+      <created>1669784083489</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1669784083489</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -196,6 +202,7 @@
     <MESSAGE value="basecode written" />
     <MESSAGE value="fix" />
     <MESSAGE value="$ENCRYPTED not found by entrypoint.sh" />
-    <option name="LAST_COMMIT_MESSAGE" value="$ENCRYPTED not found by entrypoint.sh" />
+    <MESSAGE value="Java 11 tag &gt; OK" />
+    <option name="LAST_COMMIT_MESSAGE" value="Java 11 tag &gt; OK" />
   </component>
 </project>

@@ -19,8 +19,8 @@ services:
       POSTGRES_USER: dhis
       POSTGRES_PASSWORD: dhis
       POSTGRES_DB: dhis2
-    volumes:
-      - "postgresql_data:/var/lib/postgresql/data"
+#    volumes:
+#      - "postgresql_data:/var/lib/postgresql/data"
     ports:
       - "5432:5432"
 
