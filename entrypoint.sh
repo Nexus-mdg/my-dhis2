@@ -1,13 +1,32 @@
 #!/usr/bin/env bash
 set -e
 
-printenv
+if [[ "${USE_OPEN_JDK}" == *"8"* ]]; then
+  export JAVA_HOME=$JAVA8_DIR
+else
+  export JAVA_HOME=$JAVA11_DIR
+fi
+
+PATH=$PATH:"$JAVA_HOME"/bin
+
+# set up policy for java
+if [[ "${JAVA_HOME}" == *"8"* ]]; then
+  echo "Attempting to install JCE for Java 8"
+  mv "$JAVA_HOME"/jre/lib/security/local_policy.jar "$JAVA_HOME"/jre/lib/security/local_policy.jar.native
+  mv "$JAVA_HOME"/jre/lib/security/US_export_policy.jar "$JAVA_HOME"/jre/lib/security/US_export_policy.jar.native
+  cp /US_export_policy.jar "$JAVA_HOME"/jre/lib/security/
+  cp /policy/local_policy.jar "$JAVA_HOME"/jre/lib/security/
+  cp /policy/local_policy.jar "$JAVA_HOME"/jre/lib/security/
+  cp /policy/README.txt "$JAVA_HOME"/jre/lib/security/
+  chown --reference="$JAVA_HOME"/jre/lib/security/local_policy.jar.native "$JAVA_HOME"/jre/lib/security/local_policy.jar
+  chown --reference="$JAVA_HOME"/jre/lib/security/US_export_policy.jar.native "$JAVA_HOME"/jre/lib/security/US_export_policy.jar
+  chmod --reference="$JAVA_HOME"/jre/lib/security/local_policy.jar.native "$JAVA_HOME"/jre/lib/security/local_policy.jar
+  chmod --reference="$JAVA_HOME"/jre/lib/security/US_export_policy.jar.native "$JAVA_HOME"/jre/lib/security/US_export_policy.jar
+fi
 
 # setup timezone (create env)
-if [ -z "${TIMEZONE}" ]; then
-  export TZ=$TIMEZONE
-  ln -snf /usr/share/zoneinfo/"$TZ" /etc/localtime && echo "$TZ" > /etc/timezone
-fi
+echo "Setting up timezone to $TIMEZONE"
+ln -snf /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime && echo "$TIMEZONE" > /etc/timezone
 
 declare -a conf=()
 
@@ -26,6 +45,8 @@ fi
 
 if [ -f /run/secrets/credentials ]; then
     FILE="/run/secrets/credentials"
+    echo "Found credentials file"
+
     conf+=("connection.username = $(awk 'NR==1{print $1}' ${FILE})")
     conf+=("connection.password = $(awk 'NR==2{print $1}' ${FILE})")
     conf+=("encryption.password = $(awk 'NR==3{print $1}' ${FILE})")
@@ -33,7 +54,7 @@ else
     echo -e "\031[37;44mSecret file not found, using random default credentials (dangerous)\033[0m"
     conf+=("connection.username = dhis")
     conf+=("connection.password = dhis")
-    conf+=("encryption.password = abcdef123456@")
+    conf+=("encryption.password = abcdefghijklmnopqrstuvwxyz0123456789@@")
 fi
 
 printf '%s\n' "${conf[@]}" >> /opt/dhis2/dhis.conf

@@ -19,16 +19,22 @@ RUN locale-gen fr_FR.UTF-8
 RUN update-locale
 
 RUN mkdir /opt/java
+RUN mkdir /opt/java/8
+RUN mkdir /opt/java/11
 RUN mkdir /opt/dhis2/
 RUN mkdir /tmp/tomcat-conf
 RUN mkdir /pkg
 
-RUN wget -O /pkg/openjdk.tar.gz "http://172.17.0.1:8000/jdk-11.tar.gz"
-RUN tar -zxvf /pkg/openjdk.tar.gz -C /opt/java
+RUN wget -O /pkg/openjdk.tar.gz "http://172.17.0.1:8000/openjdk-8u40-b25-linux-x64-10_feb_2015.tar.gz"
+RUN tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/8
 
-#ENV JAVA_HOME="/opt/java/java-se-8u40-ri"
-ENV JAVA_HOME="/opt/java/jdk-11"
-ENV PATH $PATH:$JAVA_HOME/bin
+RUN wget -O /pkg/openjdk.tar.gz "http://172.17.0.1:8000/jdk-11.tar.gz"
+RUN tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/11
+
+
+ENV JAVA8_DIR="/opt/java/8/java-se-8u40-ri"
+ENV JAVA11_DIR="/opt/java/11/jdk-11"
+ARG JAVA_HOME="/opt/java/8/java-se-8u40-ri"
 # Important
 ENV JAVA_OPTS "$OPTS"
 
@@ -64,6 +70,9 @@ EXPOSE 8080 8443
 
 # Install postgres client
 RUN apt-get install -y postgresql-client
+
+# Policy
+COPY /policy /policy
 
 # Entrypoint
 WORKDIR /pkg

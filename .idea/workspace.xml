@@ -5,8 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8af00fd9-7008-4681-a01b-8428248dea94" name="Changes" comment="Java 11 tag &gt; OK">
+      <change afterPath="$PROJECT_DIR$/credentials" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/policy/README.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/policy/US_export_policy.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/policy/local_policy.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/entrypoint.sh" beforeDir="false" afterPath="$PROJECT_DIR$/entrypoint.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,25 +42,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/toavina/AquaProjects/subversion/dhis2/tomcatconf-http&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "/home/toavina/AquaProjects/subversion/dhis2",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/tomcatconf-http" />
       <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/tomcatconf-http" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/def" />
@@ -126,9 +132,9 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Docker.sharer/sharer-compose.yml: Compose Deployment" />
         <item itemvalue="Docker.docker-compose.yaml.sharer: Compose Deployment" />
         <item itemvalue="Docker.SHARER" />
-        <item itemvalue="Docker.sharer/sharer-compose.yml: Compose Deployment" />
         <item itemvalue="Docker.sharer/sharer-compose.yml: Compose Deployment" />
         <item itemvalue="Docker.SHARER" />
       </list>
@@ -151,7 +157,7 @@
       <workItem from="1669727965218" duration="27000" />
       <workItem from="1669733303572" duration="4124000" />
       <workItem from="1669778946294" duration="1368000" />
-      <workItem from="1669780396427" duration="3559000" />
+      <workItem from="1669780396427" duration="8436000" />
     </task>
     <task id="LOCAL-00001" summary="basecode written">
       <created>1669700999626</created>
@@ -181,7 +187,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669784083489</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Java 11 tag &gt; OK">
+      <created>1669784358625</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1669784358625</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
