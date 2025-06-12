@@ -1,0 +1,7 @@
+FROM python:3-slim
+
+WORKDIR /share
+
+EXPOSE 8000
+
+CMD ["python3", "-m", "http.server"]
