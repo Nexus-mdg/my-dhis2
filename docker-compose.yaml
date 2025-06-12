@@ -5,10 +5,11 @@ services:
 
   sharer:
     container_name: sharer
-    image: asouhei/snis-filesharer
-    tty: true
+    build:
+      context: .
+      dockerfile: Dockerfile.sharer
     volumes:
-      - "/home/toavina/Apps/Installers:/share"
+      - "./shared:/share"
     ports:
       - "8000:8000"
 
