@@ -1,28 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
-if [[ "${USE_OPEN_JDK}" == *"8"* ]]; then
-  export JAVA_HOME=$JAVA8_DIR
-else
-  export JAVA_HOME=$JAVA11_DIR
-fi
-
+# Only JDK 11 is supported now
+export JAVA_HOME=$JAVA11_DIR
 PATH=$PATH:"$JAVA_HOME"/bin
 
-# set up policy for java
-if [[ "${JAVA_HOME}" == *"8"* ]]; then
-  echo "Attempting to install JCE for Java 8"
-  mv "$JAVA_HOME"/jre/lib/security/local_policy.jar "$JAVA_HOME"/jre/lib/security/local_policy.jar.native
-  mv "$JAVA_HOME"/jre/lib/security/US_export_policy.jar "$JAVA_HOME"/jre/lib/security/US_export_policy.jar.native
-  cp /US_export_policy.jar "$JAVA_HOME"/jre/lib/security/
-  cp /policy/local_policy.jar "$JAVA_HOME"/jre/lib/security/
-  cp /policy/local_policy.jar "$JAVA_HOME"/jre/lib/security/
-  cp /policy/README.txt "$JAVA_HOME"/jre/lib/security/
-  chown --reference="$JAVA_HOME"/jre/lib/security/local_policy.jar.native "$JAVA_HOME"/jre/lib/security/local_policy.jar
-  chown --reference="$JAVA_HOME"/jre/lib/security/US_export_policy.jar.native "$JAVA_HOME"/jre/lib/security/US_export_policy.jar
-  chmod --reference="$JAVA_HOME"/jre/lib/security/local_policy.jar.native "$JAVA_HOME"/jre/lib/security/local_policy.jar
-  chmod --reference="$JAVA_HOME"/jre/lib/security/US_export_policy.jar.native "$JAVA_HOME"/jre/lib/security/US_export_policy.jar
-fi
+# JDK 11 has unlimited strength cryptography enabled by default, no need to install JCE policy files
+echo "Using JDK 11 - unlimited strength cryptography is enabled by default"
 
 # setup timezone (create env)
 echo "Setting up timezone to $TIMEZONE"
