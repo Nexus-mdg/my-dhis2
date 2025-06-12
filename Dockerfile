@@ -25,7 +25,7 @@ RUN mkdir /tmp/tomcat-conf
 RUN mkdir /pkg
 
 
-RUN wget -O /pkg/openjdk.tar.gz "http://172.17.0.1:8000/jdk-11.tar.gz"
+RUN wget -O /pkg/openjdk.tar.gz "http://sharer:8000/jdk-11.tar.gz"
 RUN tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/11
 
 
@@ -36,7 +36,7 @@ ENV JAVA_OPTS "-Xmx2000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile
 
 # Install Tomcat
 RUN mkdir /opt/tomcat
-RUN wget -O /opt/tomcat/tomcat.tar.gz "http://172.17.0.1:8000/apache-tomcat-8.5.47.tar.gz"
+RUN wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/apache-tomcat-8.5.47.tar.gz"
 RUN tar -zxvf /opt/tomcat/tomcat.tar.gz -C /opt/tomcat
 WORKDIR /
 ENV CATALINA_HOME="/opt/tomcat/apache-tomcat-8.5.47"

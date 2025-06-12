@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8af00fd9-7008-4681-a01b-8428248dea94" name="Changes" comment="New branch for 2.41">
+    <list default="true" id="8af00fd9-7008-4681-a01b-8428248dea94" name="Changes" comment="Shared excluded from push">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -167,7 +167,7 @@
       <workItem from="1669780396427" duration="8436000" />
       <workItem from="1749728025915" duration="396000" />
       <workItem from="1749728440940" duration="9000" />
-      <workItem from="1749728458178" duration="1654000" />
+      <workItem from="1749728458178" duration="2699000" />
     </task>
     <task id="LOCAL-00001" summary="basecode written">
       <created>1669700999626</created>
@@ -212,7 +212,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749728291497</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Shared excluded from push">
+      <option name="closed" value="true" />
+      <created>1749730423134</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1749730423134</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -238,6 +246,7 @@
     <MESSAGE value="$ENCRYPTED not found by entrypoint.sh" />
     <MESSAGE value="Java 11 tag &gt; OK" />
     <MESSAGE value="New branch for 2.41" />
-    <option name="LAST_COMMIT_MESSAGE" value="New branch for 2.41" />
+    <MESSAGE value="Shared excluded from push" />
+    <option name="LAST_COMMIT_MESSAGE" value="Shared excluded from push" />
   </component>
 </project>
