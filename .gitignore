@@ -3,3 +3,4 @@
 !/shared/.add
 /.env
 /.env.swarm
+/src/dhis2_credentials_*.txt
