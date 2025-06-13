@@ -32,12 +32,12 @@ services:
 
   db:
     image: postgis/postgis:12-3.3
-    environment:
-      POSTGRES_USER: dhis
-      POSTGRES_PASSWORD: dhis
-      POSTGRES_DB: dhis2
     volumes:
       - "postgresql_data:/var/lib/postgresql/data"
+    secrets:
+      - postgres-user
+      - postgres-password
+      - postgres-db
     ports:
       - "5432:5432"
     deploy:
@@ -123,3 +123,11 @@ volumes:
 networks:
   default:
     driver: overlay
+
+secrets:
+  postgres-user:
+    file: ./postgres-user
+  postgres-password:
+    file: ./postgres-password
+  postgres-db:
+    file: ./postgres-db

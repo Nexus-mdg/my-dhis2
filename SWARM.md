@@ -180,7 +180,43 @@ docker service ps dhis2_dhis2
 
 ## Security Considerations
 
-1. Use Docker secrets for sensitive information (credentials, certificates)
+### Managing Secrets
+
+The stack uses Docker Secrets to securely manage sensitive information:
+
+1. **Database Credentials**: PostgreSQL credentials are stored as Docker Secrets:
+   - `postgres-user`: Database username
+   - `postgres-password`: Database password
+   - `postgres-db`: Database name
+
+To create or update these secrets:
+
+```bash
+# Create secret files
+echo "your_username" > postgres-user
+echo "your_secure_password" > postgres-password
+echo "your_database_name" > postgres-db
+
+# Update the stack to use the new secrets
+docker stack deploy -c docker-compose.swarm.yaml dhis2
+```
+
+To view the current secrets:
+
+```bash
+docker secret ls
+```
+
+To remove a secret (requires removing the stack first):
+
+```bash
+docker stack rm dhis2
+docker secret rm postgres-user postgres-password postgres-db
+```
+
+### General Security Recommendations
+
+1. Use Docker secrets for all sensitive information (credentials, certificates)
 2. Implement network segmentation using overlay networks
 3. Regularly update base images and dependencies
 4. Implement proper access controls for the Docker daemon
