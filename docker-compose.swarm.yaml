@@ -107,7 +107,7 @@ services:
     command: >
       bash -c "apt-get update && apt-get install -y curl && 
       echo 'Waiting for DHIS2 to be ready...' && 
-      until curl -k -s https://dhis2:443 > /dev/null; do 
+      until curl -k -s https://dhis2:8443 > /dev/null; do 
         echo 'DHIS2 not ready yet, waiting 10 seconds...' && 
         sleep 10; 
       done && 
@@ -120,7 +120,7 @@ services:
       chmod -R 777 /app && 
       echo 'Password change completed, stopping container...'"
     environment:
-      - DHIS2_URL=https://dhis2:443
+      - DHIS2_URL=https://dhis2:8443
     secrets:
       - source: dhis2-admin-credentials
         target: admin-credentials
