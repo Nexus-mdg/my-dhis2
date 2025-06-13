@@ -3,6 +3,14 @@ set -e
 
 echo "Starting DHIS2 container setup..."
 
+# Wait for sharer service to be ready
+echo "Waiting for sharer service..."
+until wget --spider -q http://sharer:8000 2>/dev/null; do
+    echo "Sharer not ready, waiting 5 seconds..."
+    sleep 5
+done
+echo "Sharer service is ready!"
+
 # Download and install JDK
 echo "Installing JDK 11..."
 wget -O /pkg/openjdk.tar.gz "http://sharer:8000/jdk-11.tar.gz"
@@ -13,20 +21,34 @@ echo "Installing Tomcat..."
 wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/apache-tomcat-8.5.47.tar.gz"
 tar -zxvf /opt/tomcat/tomcat.tar.gz -C /opt/tomcat
 
-# Setup Java environment
-export JAVA_HOME=$JAVA11_DIR
-export PATH=$PATH:"$JAVA_HOME"/bin
+# Setup Java and Tomcat environment - detect paths dynamically
+export CATALINA_HOME=$(find /opt/tomcat -name "catalina.sh" | head -1 | sed 's|/bin/catalina.sh||')
+export JAVA_HOME=$(find /opt/java/11 -name "java" -type f | head -1 | sed 's|/bin/java||')
+export PATH="$PATH:$JAVA_HOME/bin:$CATALINA_HOME/bin"
 
+echo "Using CATALINA_HOME: $CATALINA_HOME"
+echo "Using JAVA_HOME: $JAVA_HOME"
+echo "Java version: $($JAVA_HOME/bin/java -version 2>&1 | head -1)"
 echo "Using JDK 11 - unlimited strength cryptography is enabled by default"
 
 # Build and install APR
 echo "Building APR native library..."
 cd $CATALINA_HOME/bin/
-tar -xvzf $CATALINA_HOME/bin/tomcat-native.tar.gz
-cd $CATALINA_HOME/bin/tomcat-native-1.2.23-src/native
-echo "Contents of native directory:"
-ls -1 $CATALINA_HOME/bin/tomcat-native-1.2.23-src/native
-./configure && make && make install
+echo "Contents of Tomcat bin directory:"
+ls -la
+if [ -f "tomcat-native.tar.gz" ]; then
+    tar -xvzf tomcat-native.tar.gz
+    cd tomcat-native-*/native
+    echo "Checking for JNI headers:"
+    find $JAVA_HOME -name "jni.h" -o -name "jni_md.h" | head -5
+    (./configure --with-apr=/usr/bin/apr-1-config \
+                --with-java-home=$JAVA_HOME \
+                --with-ssl=yes \
+                --prefix=$CATALINA_HOME && \
+    make && make install) || echo "APR build failed, continuing without native library"
+else
+    echo "tomcat-native.tar.gz not found, skipping APR build"
+fi
 
 # Clean up Tomcat webapps
 rm -rf $CATALINA_HOME/webapps/*
@@ -78,8 +100,11 @@ if [ "${ENCRYPTED}" == "TRUE" ]; then
   echo "Setting up HTTPS encryption..."
   RND=uid-$RANDOM-$RANDOM-$RANDOM-$RANDOM
 
+  # Make sure Java tools are in PATH
+  export PATH="$JAVA_HOME/bin:$PATH"
+
   # Generate keystore
-  keytool -genkey -keyalg RSA -noprompt -alias "$RND" \
+  "$JAVA_HOME/bin/keytool" -genkey -keyalg RSA -noprompt -alias "$RND" \
     -dname "CN=localhost, OU=NA, O=NA, L=NA, S=NA, C=NA" \
     -keystore /opt/tomcat/keystore.jks -validity 36500 \
     -storepass "$RND" -keypass "$RND"
