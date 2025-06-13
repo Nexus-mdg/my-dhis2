@@ -184,14 +184,14 @@ docker service ps dhis2_dhis2
 
 The stack uses Docker Secrets to securely manage sensitive information. All secret files are stored in the `secrets` directory to keep them organized and separate from the rest of the project.
 
-The stack uses two different mechanisms for handling credentials:
+The stack uses Docker Swarm secrets to securely manage sensitive information for all services:
 
-1. **PostgreSQL Database Credentials**: Used by the PostgreSQL container via Docker Swarm secrets:
+1. **PostgreSQL Database Credentials**: Used by the PostgreSQL container:
    - `secrets/postgres-user`: Database username
    - `secrets/postgres-password`: Database password
    - `secrets/postgres-db`: Database name
 
-2. **DHIS2 Application Credentials**: Used by the DHIS2 container via a mounted file:
+2. **DHIS2 Application Credentials**: Used by the DHIS2 container:
    - `secrets/credentials`: Contains three lines:
      - Line 1: Database username (same as in `postgres-user`)
      - Line 2: Database password (same as in `postgres-password`)
@@ -227,7 +227,7 @@ To remove a secret (requires removing the stack first):
 
 ```bash
 docker stack rm dhis2
-docker secret rm postgres-user postgres-password postgres-db
+docker secret rm postgres-user postgres-password postgres-db credentials
 # Also remove the local secret files if no longer needed
 rm -f secrets/postgres-user secrets/postgres-password secrets/postgres-db secrets/credentials
 ```

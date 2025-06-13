@@ -92,7 +92,8 @@ services:
     volumes:
       - "fileResource:/opt/dhis2/files"
       - "logs:/opt/dhis2/logs"
-      - "./secrets/credentials:/run/secrets/credentials"
+    secrets:
+      - credentials
     ports:
       - "8080:8080"
       - "9443:8443"
@@ -131,3 +132,5 @@ secrets:
     file: ./secrets/postgres-password
   postgres-db:
     file: ./secrets/postgres-db
+  credentials:
+    file: ./secrets/credentials
