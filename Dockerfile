@@ -66,7 +66,6 @@ RUN CATALINA_HOME_BUILD=$(find /opt/tomcat -name "catalina.sh" | head -1 | sed '
 # Copy configuration and scripts
 COPY tomcatconf-https/ /tmp/tomcat-conf-https/
 COPY tomcatconf-http/ /tmp/tomcat-conf-http/
-COPY /policy /policy
 ADD entrypoint.sh /tmp/entrypoint.sh
 RUN chmod 755 /tmp/entrypoint.sh
 

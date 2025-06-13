@@ -53,6 +53,7 @@ swarm-init-secrets:
 	@echo "All secrets created successfully"
 
 swarm-deploy: swarm-init-secrets
+	docker compose -f $(SWARM_FILE) build
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
 swarm-remove:
