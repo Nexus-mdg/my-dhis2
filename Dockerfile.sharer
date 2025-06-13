@@ -1,4 +1,8 @@
-FROM python:3-slim
+FROM ubuntu:22.04
+
+RUN apt -y update && \
+    apt install -y curl \
+    python3
 
 WORKDIR /share
 
