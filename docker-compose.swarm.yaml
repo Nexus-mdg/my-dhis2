@@ -2,33 +2,34 @@ version: '3.8'
 
 services:
 
-  sharer:
-    image: dhis2-sharer
-    build:
-      context: .
-      dockerfile: Dockerfile.sharer
-    volumes:
-      - "./shared:/share"
-    ports:
-      - "8000:8000"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-      restart_policy:
-        condition: on-failure
-        max_attempts: 3
+# Sharer service replaced by ingress service with shared folder
+#  sharer:
+#    image: dhis2-sharer
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.sharer
+#    volumes:
+#      - "./shared:/share"
+#    ports:
+#      - "8000:8000"
+#    healthcheck:
+#      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+#      start_period: 30s
+#    deploy:
+#      replicas: 1
+#      resources:
+#        limits:
+#          cpus: '0.5'
+#          memory: 256M
+#        reservations:
+#          cpus: '0.1'
+#          memory: 128M
+#      restart_policy:
+#        condition: on-failure
+#        max_attempts: 3
 
   db:
     image: postgis/postgis:12-3.3
@@ -85,7 +86,7 @@ services:
       DB_NAME: "dhis2"
       TOMCAT_ARCHIVE_FILE: "apache-tomcat-9.0.106.tar.gz"
       JAVA_ARCHIVE_FILE: "jdk-17.tar.gz"
-      DHIS2_WARFILE_URL: "http://sharer:8000/dhis2.war"
+      DHIS2_WARFILE_URL: "https://ingress:8443/dhis2.war"
       CERT_SUBJECT: "/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost"
       JAVA_OPTS: "-Xmx3000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
     volumes:
@@ -97,7 +98,6 @@ services:
       # HTTP port removed to enforce HTTPS only
       - "9443:8443"
     depends_on:
-      - sharer
       - db
     deploy:
       replicas: 1
@@ -117,13 +117,14 @@ services:
     build:
       context: ./ingress
       dockerfile: Dockerfile
+    volumes:
+      - "./shared:/usr/share/nginx/shared"
     ports:
       - "80:80"    # HTTP (redirects to HTTPS)
       - "443:443"  # HTTPS for DHIS2
       - "444:444"  # HTTPS for Adminer
-    depends_on:
-      - dhis2
-      - adminer
+      - "8000:8000" # HTTP file sharing (redirects to HTTPS)
+      - "8443:8443" # HTTPS file sharing
     deploy:
       replicas: 1
       resources:

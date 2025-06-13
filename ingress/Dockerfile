@@ -10,8 +10,8 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY generate-certs.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/generate-certs.sh
 
-# Create directory for SSL certificates
-RUN mkdir -p /etc/nginx/ssl
+# Create directory for SSL certificates and shared files
+RUN mkdir -p /etc/nginx/ssl /usr/share/nginx/shared
 
 # Generate self-signed certificates on container start
 CMD ["/bin/bash", "-c", "/usr/local/bin/generate-certs.sh && nginx -g 'daemon off;'"]
