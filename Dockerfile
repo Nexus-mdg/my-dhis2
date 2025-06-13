@@ -43,8 +43,6 @@ RUN CATALINA_HOME_DETECTED=$(find /opt/tomcat -name "catalina.sh" | head -1 | se
     echo "export JAVA_HOME=$JAVA_HOME_DETECTED" >> /etc/environment && \
     echo "export PATH=\$PATH:\$CATALINA_HOME/bin:\$JAVA_HOME/bin" >> /etc/environment
 
-ENV CATALINA_HOME="/opt/tomcat/apache-tomcat-9.0.78"
-
 # Build APR during build phase (detect paths dynamically)
 RUN CATALINA_HOME_BUILD=$(find /opt/tomcat -name "catalina.sh" | head -1 | sed 's|/bin/catalina.sh||') && \
     JAVA_HOME_BUILD=$(find /opt/java/jdk -name "java" -type f | head -1 | sed 's|/bin/java||') && \
