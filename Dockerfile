@@ -22,20 +22,12 @@ RUN locale-gen fr_FR.UTF-8
 RUN update-locale
 
 # Create directories
-RUN mkdir -p /opt/java/11 \
+RUN mkdir -p /opt/java/jdk \
     /opt/dhis2/ \
     /opt/tomcat \
     /tmp/tomcat-conf \
     /pkg
 
-# Download and install JDK and Tomcat during build
-RUN wget -O /pkg/openjdk.tar.gz "http://sharer:8000/jdk-11.tar.gz" && \
-    tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/11 && \
-    wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/apache-tomcat-8.5.47.tar.gz" && \
-    tar -zxvf /opt/tomcat/tomcat.tar.gz -C /opt/tomcat && \
-    echo "=== JDK structure ===" && ls -la /opt/java/11/ && \
-    echo "=== Tomcat structure ===" && ls -la /opt/tomcat/ && \
-    echo "=== Tomcat bin contents ===" && ls -la /opt/tomcat/*/bin/ || true
 
 # Environment variables - will be set dynamically based on actual structure
 ENV JAVA_OPTS="-Xmx2000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
@@ -44,7 +36,7 @@ ENV LD_LIBRARY_PATH="/usr/local/apr/lib"
 
 # Set CATALINA_HOME and JAVA_HOME dynamically after extraction
 RUN CATALINA_HOME_DETECTED=$(find /opt/tomcat -name "catalina.sh" | head -1 | sed 's|/bin/catalina.sh||') && \
-    JAVA_HOME_DETECTED=$(find /opt/java/11 -name "java" -type f | head -1 | sed 's|/bin/java||') && \
+    JAVA_HOME_DETECTED=$(find /opt/java/jdk -name "java" -type f | head -1 | sed 's|/bin/java||') && \
     echo "Detected CATALINA_HOME: $CATALINA_HOME_DETECTED" && \
     echo "Detected JAVA_HOME: $JAVA_HOME_DETECTED" && \
     echo "export CATALINA_HOME=$CATALINA_HOME_DETECTED" >> /etc/environment && \
@@ -55,7 +47,7 @@ ENV CATALINA_HOME="/opt/tomcat/apache-tomcat-8.5.47"
 
 # Build APR during build phase (detect paths dynamically)
 RUN CATALINA_HOME_BUILD=$(find /opt/tomcat -name "catalina.sh" | head -1 | sed 's|/bin/catalina.sh||') && \
-    JAVA_HOME_BUILD=$(find /opt/java/11 -name "java" -type f | head -1 | sed 's|/bin/java||') && \
+    JAVA_HOME_BUILD=$(find /opt/java/jdk -name "java" -type f | head -1 | sed 's|/bin/java||') && \
     echo "Building APR with CATALINA_HOME: $CATALINA_HOME_BUILD and JAVA_HOME: $JAVA_HOME_BUILD" && \
     cd $CATALINA_HOME_BUILD/bin/ && \
     echo "Contents of Tomcat bin directory:" && ls -la && \

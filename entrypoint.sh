@@ -12,9 +12,9 @@ done
 echo "Sharer service is ready!"
 
 # Download and install JDK
-echo "Installing JDK 11..."
-wget -O /pkg/openjdk.tar.gz "http://sharer:8000/jdk-11.tar.gz"
-tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/11
+echo "Installing JDK ..."
+wget -O /pkg/openjdk.tar.gz "http://sharer:8000/${JAVA_ARCHIVE_FILE}"
+tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/jdk
 
 # Download and install Tomcat
 echo "Installing Tomcat..."
@@ -23,13 +23,13 @@ tar -zxvf /opt/tomcat/tomcat.tar.gz -C /opt/tomcat
 
 # Setup Java and Tomcat environment - detect paths dynamically
 export CATALINA_HOME=$(find /opt/tomcat -name "catalina.sh" | head -1 | sed 's|/bin/catalina.sh||')
-export JAVA_HOME=$(find /opt/java/11 -name "java" -type f | head -1 | sed 's|/bin/java||')
+export JAVA_HOME=$(find /opt/java/jdk -name "java" -type f | head -1 | sed 's|/bin/java||')
 export PATH="$PATH:$JAVA_HOME/bin:$CATALINA_HOME/bin"
 
 echo "Using CATALINA_HOME: $CATALINA_HOME"
 echo "Using JAVA_HOME: $JAVA_HOME"
 echo "Java version: $($JAVA_HOME/bin/java -version 2>&1 | head -1)"
-echo "Using JDK 11 - unlimited strength cryptography is enabled by default"
+echo "Using JDK - unlimited strength cryptography is enabled by default"
 
 # Build and install APR
 echo "Building APR native library..."
