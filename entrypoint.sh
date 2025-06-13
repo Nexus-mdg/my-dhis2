@@ -62,8 +62,9 @@ ln -snf /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime && echo "$TIMEZONE" > /et
 echo "Building DHIS2 configuration..."
 declare -a conf=()
 
-[ "${ENCRYPTED}" == "TRUE" ] && conf+=("server.https = on") || conf+=("server.https = off")
-[ "${ENCRYPTED}" == "TRUE" ] && conf+=("server.http.port = 8443") || conf+=("server.http.port = 8080")
+# Always use HTTPS for dhis2 service
+conf+=("server.https = on")
+conf+=("server.http.port = 8443")
 conf+=("analytics.cache.expiration = 3600")
 conf+=("connection.dialect = org.hibernate.dialect.PostgreSQLDialect")
 conf+=("connection.driver_class = org.postgresql.Driver")
@@ -95,34 +96,29 @@ fi
 printf '%s\n' "${conf[@]}" > /opt/dhis2/dhis.conf
 chmod 0600 /opt/dhis2/dhis.conf
 
-# Setup SSL/TLS if encryption is enabled
-if [ "${ENCRYPTED}" == "TRUE" ]; then
-  echo "Setting up HTTPS encryption..."
-  RND=uid-$RANDOM-$RANDOM-$RANDOM-$RANDOM
+# Setup SSL/TLS (always enabled for dhis2 service)
+echo "Setting up HTTPS encryption..."
+RND=uid-$RANDOM-$RANDOM-$RANDOM-$RANDOM
 
-  # Make sure Java tools are in PATH
-  export PATH="$JAVA_HOME/bin:$PATH"
+# Make sure Java tools are in PATH
+export PATH="$JAVA_HOME/bin:$PATH"
 
-  # Generate keystore
-  "$JAVA_HOME/bin/keytool" -genkey -keyalg RSA -noprompt -alias "$RND" \
-    -dname "CN=localhost, OU=NA, O=NA, L=NA, S=NA, C=NA" \
-    -keystore /opt/tomcat/keystore.jks -validity 36500 \
-    -storepass "$RND" -keypass "$RND"
+# Generate keystore
+"$JAVA_HOME/bin/keytool" -genkey -keyalg RSA -noprompt -alias "$RND" \
+  -dname "CN=localhost, OU=NA, O=NA, L=NA, S=NA, C=NA" \
+  -keystore /opt/tomcat/keystore.jks -validity 36500 \
+  -storepass "$RND" -keypass "$RND"
 
-  # Generate PEM certificates
-  openssl req -x509 -newkey rsa:4096 \
-    -keyout /opt/tomcat/localhost-rsa-key.pem \
-    -out /opt/tomcat/localhost-rsa-cert.pem \
-    -days 36500 -passout pass:"$RND" \
-    -subj "${CERT_SUBJECT:-/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost}"
+# Generate PEM certificates
+openssl req -x509 -newkey rsa:4096 \
+  -keyout /opt/tomcat/localhost-rsa-key.pem \
+  -out /opt/tomcat/localhost-rsa-cert.pem \
+  -days 36500 -passout pass:"$RND" \
+  -subj "${CERT_SUBJECT:-/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost}"
 
-  # Copy HTTPS configuration
-  cp -f /tmp/tomcat-conf-https/* "$CATALINA_HOME"/conf/
-  sed -i 's/PEMsPassphrase/'"$RND"'/g' "$CATALINA_HOME"/conf/server.xml
-else
-  echo "Using HTTP configuration..."
-  cp -f /tmp/tomcat-conf-http/* "$CATALINA_HOME"/conf/
-fi
+# Copy HTTPS configuration
+cp -f /tmp/tomcat-conf-https/* "$CATALINA_HOME"/conf/
+sed -i 's/PEMsPassphrase/'"$RND"'/g' "$CATALINA_HOME"/conf/server.xml
 
 # Download DHIS2 WAR file
 if [ -n "$DHIS2_WARFILE_URL" ]; then
