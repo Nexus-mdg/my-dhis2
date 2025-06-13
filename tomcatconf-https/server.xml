@@ -71,12 +71,7 @@
 <!--              connectionTimeout="20000"-->
 <!--              redirectPort="8443" maxThreads="2000" minSpareThreads="50" acceptCount="1000" MaxConnections="1000" address="0.0.0.0" relaxedQueryChars="[,],|"/>-->
 
- <Connector port="8080" protocol="HTTP/1.1"
-        connectionTimeout="20000"
-        redirectPort="8443"
-        address="0.0.0.0"
-        relaxedQueryChars="[,],|"
- />
+<!-- HTTP connector removed to enforce HTTPS only -->
 
 <!--            maxThreads="2000"-->
 <!--            minSpareThreads="500"-->

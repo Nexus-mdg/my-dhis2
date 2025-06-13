@@ -46,7 +46,6 @@ services:
       dockerfile: Dockerfile
     tty: true
     environment:
-      ENCRYPTED: "TRUE"
       TIMEZONE: "Indian/Antananarivo"
       DB_HOST: "db"
       DB_PORT: "5432"
@@ -61,7 +60,7 @@ services:
       - "logs:/opt/dhis2/logs"
       - "./credentials:/run/secrets/credentials"
     ports:
-      - "8080:8080"
+      # HTTP port removed to enforce HTTPS only
       - "9443:8443"
     depends_on:
       - sharer
