@@ -4,3 +4,4 @@
 /.env
 /.env.swarm
 /src/dhis2_credentials_*.txt
+/secrets/dhis2_credentials_*.txt

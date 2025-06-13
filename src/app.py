@@ -231,9 +231,9 @@ class DHIS2RootUserCreator:
 
 
 def write_credentials_file(result, dhis2_url):
-    """Write credentials to a file in /app for easy access"""
+    """Write credentials to a file in /app/secrets for easy access"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"/app/dhis2_credentials_{timestamp}.txt"
+    filename = f"/app/secrets/dhis2_credentials_{timestamp}.txt"
 
     try:
         with open(filename, 'w') as f:
