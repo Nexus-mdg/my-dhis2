@@ -182,20 +182,36 @@ docker service ps dhis2_dhis2
 
 ### Managing Secrets
 
-The stack uses Docker Secrets to securely manage sensitive information:
+The stack uses Docker Secrets to securely manage sensitive information. All secret files are stored in the `secrets` directory to keep them organized and separate from the rest of the project.
 
-1. **Database Credentials**: PostgreSQL credentials are stored as Docker Secrets:
-   - `postgres-user`: Database username
-   - `postgres-password`: Database password
-   - `postgres-db`: Database name
+The stack uses two different mechanisms for handling credentials:
+
+1. **PostgreSQL Database Credentials**: Used by the PostgreSQL container via Docker Swarm secrets:
+   - `secrets/postgres-user`: Database username
+   - `secrets/postgres-password`: Database password
+   - `secrets/postgres-db`: Database name
+
+2. **DHIS2 Application Credentials**: Used by the DHIS2 container via a mounted file:
+   - `secrets/credentials`: Contains three lines:
+     - Line 1: Database username (same as in `postgres-user`)
+     - Line 2: Database password (same as in `postgres-password`)
+     - Line 3: Encryption password (unique to this file)
 
 To create or update these secrets:
 
 ```bash
-# Create secret files
-echo "your_username" > postgres-user
-echo "your_secure_password" > postgres-password
-echo "your_database_name" > postgres-db
+# Create the secrets directory if it doesn't exist
+mkdir -p secrets
+
+# Create PostgreSQL secret files
+echo "your_username" > secrets/postgres-user
+echo "your_secure_password" > secrets/postgres-password
+echo "your_database_name" > secrets/postgres-db
+
+# Create DHIS2 credentials file
+echo "your_username" > secrets/credentials
+echo "your_secure_password" >> secrets/credentials
+echo "your_encryption_password" >> secrets/credentials
 
 # Update the stack to use the new secrets
 docker stack deploy -c docker-compose.swarm.yaml dhis2
@@ -212,6 +228,8 @@ To remove a secret (requires removing the stack first):
 ```bash
 docker stack rm dhis2
 docker secret rm postgres-user postgres-password postgres-db
+# Also remove the local secret files if no longer needed
+rm -f secrets/postgres-user secrets/postgres-password secrets/postgres-db secrets/credentials
 ```
 
 ### General Security Recommendations
