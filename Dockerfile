@@ -63,9 +63,6 @@ RUN CATALINA_HOME_BUILD=$(find /opt/tomcat -name "catalina.sh" | head -1 | sed '
         echo "tomcat-native.tar.gz not found, skipping APR build"; \
     fi
 
-# Clean up
-RUN rm -rf $CATALINA_HOME/webapps/*
-
 # Copy configuration and scripts
 COPY tomcatconf-https/ /tmp/tomcat-conf-https/
 COPY tomcatconf-http/ /tmp/tomcat-conf-http/
