@@ -32,7 +32,7 @@ This will start the following services:
 - DHIS2 application server (using Tomcat 9.0.78)
 - PostgreSQL database
 - Adminer (for database management)
-- Sharer (for sharing files between containers)
+- Ingress (for reverse proxy and file sharing)
 
 ## Configuration
 
@@ -81,7 +81,7 @@ Tomcat is configured in multiple places. To upgrade Tomcat:
    b. `entrypoint.sh`: Update the Tomcat download URL:
 
    ```bash
-   wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/apache-tomcat-9.0.106.tar.gz"  # Change to your new Tomcat version
+   wget -O /opt/tomcat/tomcat.tar.gz --no-check-certificate "https://ingress:8443/${TOMCAT_ARCHIVE_FILE}"  # Change to your new Tomcat version
    ```
 
    c. `download_tomcat9.sh`: Update the script to download the correct version:

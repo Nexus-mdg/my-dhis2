@@ -2,35 +2,6 @@ version: '3.8'
 
 services:
 
-# Sharer service replaced by ingress service with shared folder
-#  sharer:
-#    image: dhis2-sharer
-#    build:
-#      context: .
-#      dockerfile: Dockerfile.sharer
-#    volumes:
-#      - "./shared:/share"
-#    ports:
-#      - "8000:8000"
-#    healthcheck:
-#      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 3
-#      start_period: 30s
-#    deploy:
-#      replicas: 1
-#      resources:
-#        limits:
-#          cpus: '0.5'
-#          memory: 256M
-#        reservations:
-#          cpus: '0.1'
-#          memory: 128M
-#      restart_policy:
-#        condition: on-failure
-#        max_attempts: 3
-
   db:
     image: postgis/postgis:12-3.3
     volumes:

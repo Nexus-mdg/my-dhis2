@@ -143,10 +143,10 @@ docker volume rm dhis2_postgresql_data dhis2_fileResource dhis2_logs
 
 The docker-compose.swarm.yaml file defines resource limits for each service:
 
-- **sharer**: 0.5 CPU, 256MB memory
 - **db**: 1.0 CPU, 1GB memory
 - **adminer**: 0.3 CPU, 128MB memory
 - **dhis2**: 2.0 CPU, 4GB memory
+- **ingress**: 0.5 CPU, 256MB memory
 
 To monitor resource usage:
 
