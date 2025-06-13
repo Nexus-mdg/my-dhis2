@@ -112,6 +112,31 @@ services:
         condition: on-failure
         max_attempts: 3
 
+  ingress:
+    image: dhis2-ingress
+    build:
+      context: ./ingress
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"    # HTTP (redirects to HTTPS)
+      - "443:443"  # HTTPS for DHIS2
+      - "444:444"  # HTTPS for Adminer
+    depends_on:
+      - dhis2
+      - adminer
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
 volumes:
   fileResource:
     driver: local

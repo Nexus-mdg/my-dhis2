@@ -66,6 +66,20 @@ services:
       - sharer
       - db
 
+  ingress:
+    container_name: ingress
+    build:
+      context: ./ingress
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"    # HTTP (redirects to HTTPS)
+      - "443:443"  # HTTPS for DHIS2
+      - "444:444"  # HTTPS for Adminer
+    depends_on:
+      - dhis2
+      - adminer
+    restart: unless-stopped
+
 volumes:
   fileResource:
   logs:
