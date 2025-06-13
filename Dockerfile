@@ -1,5 +1,8 @@
 FROM ubuntu:20.04
 
+# Ensure sharer service is available during build
+# This is a build-time argument that can be passed if needed
+ARG SHARER_HOST=sharer
 
 RUN apt -y update && \
     apt install -y locales \
@@ -10,73 +13,65 @@ RUN apt -y update && \
             libapr1-dev \
             libssl-dev \
             build-essential \
-            fontconfig
-
+            fontconfig \
+            postgresql-client
 
 # Set the locale
 RUN locale-gen en_US.UTF-8
 RUN locale-gen fr_FR.UTF-8
 RUN update-locale
 
-RUN mkdir /opt/java
-RUN mkdir /opt/java/8
-RUN mkdir /opt/java/11
-RUN mkdir /opt/dhis2/
-RUN mkdir /tmp/tomcat-conf
-RUN mkdir /pkg
-
-RUN wget -O /pkg/openjdk.tar.gz "http://172.17.0.1:8000/openjdk-8u40-b25-linux-x64-10_feb_2015.tar.gz"
-RUN tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/8
-
-RUN wget -O /pkg/openjdk.tar.gz "http://172.17.0.1:8000/jdk-11.tar.gz"
-RUN tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/11
+# Create directories
+RUN mkdir -p /opt/java/jdk \
+    /opt/dhis2/ \
+    /opt/tomcat \
+    /tmp/tomcat-conf \
+    /pkg
 
 
-ENV JAVA8_DIR="/opt/java/8/java-se-8u40-ri"
-ENV JAVA11_DIR="/opt/java/11/jdk-11"
-ARG JAVA_HOME="/opt/java/8/java-se-8u40-ri"
-# Important
-ENV JAVA_OPTS "$OPTS"
+# Environment variables - will be set dynamically based on actual structure
+ENV JAVA_OPTS="-Xmx2000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
+ENV DHIS2_HOME="/opt/dhis2/"
+ENV LD_LIBRARY_PATH="/usr/local/apr/lib"
 
-# Install Tomcat
-RUN mkdir /opt/tomcat
-RUN wget -O /opt/tomcat/tomcat.tar.gz "http://172.17.0.1:8000/apache-tomcat-8.5.47.tar.gz"
-RUN tar -zxvf /opt/tomcat/tomcat.tar.gz -C /opt/tomcat
-WORKDIR /
-ENV CATALINA_HOME="/opt/tomcat/apache-tomcat-8.5.47"
-ENV PATH $PATH:$CATALINA_HOME/bin
+# Set CATALINA_HOME and JAVA_HOME dynamically after extraction
+RUN CATALINA_HOME_DETECTED=$(find /opt/tomcat -name "catalina.sh" | head -1 | sed 's|/bin/catalina.sh||') && \
+    JAVA_HOME_DETECTED=$(find /opt/java/jdk -name "java" -type f | head -1 | sed 's|/bin/java||') && \
+    echo "Detected CATALINA_HOME: $CATALINA_HOME_DETECTED" && \
+    echo "Detected JAVA_HOME: $JAVA_HOME_DETECTED" && \
+    echo "export CATALINA_HOME=$CATALINA_HOME_DETECTED" >> /etc/environment && \
+    echo "export JAVA_HOME=$JAVA_HOME_DETECTED" >> /etc/environment && \
+    echo "export PATH=\$PATH:\$CATALINA_HOME/bin:\$JAVA_HOME/bin" >> /etc/environment
 
-# APR
-WORKDIR $CATALINA_HOME/bin/
-RUN tar -xvzf $CATALINA_HOME/bin/tomcat-native.tar.gz
-WORKDIR $CATALINA_HOME/bin/tomcat-native-1.2.23-src/native
-RUN echo $(ls -1 $CATALINA_HOME/bin/tomcat-native-1.2.23-src/native)
-RUN ./configure && make && make install
-ENV LD_LIBRARY_PATH=/usr/local/apr/lib
-WORKDIR /
+# Build APR during build phase (detect paths dynamically)
+RUN CATALINA_HOME_BUILD=$(find /opt/tomcat -name "catalina.sh" | head -1 | sed 's|/bin/catalina.sh||') && \
+    JAVA_HOME_BUILD=$(find /opt/java/jdk -name "java" -type f | head -1 | sed 's|/bin/java||') && \
+    echo "Building APR with CATALINA_HOME: $CATALINA_HOME_BUILD and JAVA_HOME: $JAVA_HOME_BUILD" && \
+    cd $CATALINA_HOME_BUILD/bin/ && \
+    echo "Contents of Tomcat bin directory:" && ls -la && \
+    if [ -f "tomcat-native.tar.gz" ]; then \
+        tar -xvzf tomcat-native.tar.gz && \
+        cd tomcat-native-*/native && \
+        echo "Checking for JNI headers:" && \
+        find $JAVA_HOME_BUILD -name "jni.h" -o -name "jni_md.h" | head -5 && \
+        (./configure --with-apr=/usr/bin/apr-1-config \
+                    --with-java-home=$JAVA_HOME_BUILD \
+                    --with-ssl=yes \
+                    --prefix=$CATALINA_HOME_BUILD && \
+        make && make install) || echo "APR build failed, continuing without native library"; \
+    else \
+        echo "tomcat-native.tar.gz not found, skipping APR build"; \
+    fi
 
-RUN rm -R $CATALINA_HOME/webapps/*
-
-# Entrypoint file
-ADD entrypoint.sh /tmp
-RUN chmod 755 /tmp/entrypoint.sh
-
+# Copy configuration and scripts
 COPY tomcatconf-https/ /tmp/tomcat-conf-https/
 COPY tomcatconf-http/ /tmp/tomcat-conf-http/
-
-ENV DHIS2_HOME="/opt/dhis2/"
+COPY /policy /policy
+ADD entrypoint.sh /tmp/entrypoint.sh
+RUN chmod 755 /tmp/entrypoint.sh
 
 EXPOSE 8080 8443
 
-# Install postgres client
-RUN apt-get install -y postgresql-client
-
-# Policy
-COPY /policy /policy
-
-# Entrypoint
 WORKDIR /pkg
 ENTRYPOINT ["/tmp/entrypoint.sh"]
-
-# RUN Tomcat
 CMD ["catalina.sh", "run"]

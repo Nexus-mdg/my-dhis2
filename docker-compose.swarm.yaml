@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+
+  sharer:
+    image: dhis2-sharer
+    build:
+      context: .
+      dockerfile: Dockerfile.sharer
+    volumes:
+      - "./shared:/share"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  db:
+    image: postgis/postgis:12-3.3
+    volumes:
+      - "postgresql_data:/var/lib/postgresql/data"
+    secrets:
+      - postgres-user
+      - postgres-password
+      - postgres-db
+    ports:
+      - "5432:5432"
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  adminer:
+    image: adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  dhis2:
+    image: dhis2-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    tty: true
+    environment:
+      ENCRYPTED: "TRUE"
+      TIMEZONE: "Indian/Antananarivo"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      DB_NAME: "dhis2"
+      TOMCAT_ARCHIVE_FILE: "apache-tomcat-9.0.106.tar.gz"
+      JAVA_ARCHIVE_FILE: "jdk-17.tar.gz"
+      DHIS2_WARFILE_URL: "http://sharer:8000/dhis2.war"
+      CERT_SUBJECT: "/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost"
+      JAVA_OPTS: "-Xmx3000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
+    volumes:
+      - "fileResource:/opt/dhis2/files"
+      - "logs:/opt/dhis2/logs"
+    secrets:
+      - credentials
+    ports:
+      - "8080:8080"
+      - "9443:8443"
+    depends_on:
+      - sharer
+      - db
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+volumes:
+  fileResource:
+    driver: local
+  logs:
+    driver: local
+  postgresql_data:
+    driver: local
+
+networks:
+  default:
+    driver: overlay
+
+secrets:
+  postgres-user:
+    file: ./secrets/postgres-user
+  postgres-password:
+    file: ./secrets/postgres-password
+  postgres-db:
+    file: ./secrets/postgres-db
+  credentials:
+    file: ./secrets/credentials
