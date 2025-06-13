@@ -184,3 +184,9 @@ docker service ps dhis2_dhis2
 2. Implement network segmentation using overlay networks
 3. Regularly update base images and dependencies
 4. Implement proper access controls for the Docker daemon
+
+## Get swarm IP
+
+```bash
+docker network inspect docker_gwbridge
+```
