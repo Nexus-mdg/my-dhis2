@@ -9,6 +9,24 @@ For detailed information about the DHIS2 Docker environment itself, please refer
 - Docker and Docker Compose installed on your system
 - For Swarm mode: Docker Swarm initialized on your system
 
+## Environment Files
+
+The application requires environment files to run properly:
+
+### For Docker Compose
+
+- **`.env`**: Contains all environment variables for the Docker Compose setup
+  - Copy from `.env.example`: `cp .env.example .env`
+  - Contains database credentials and DHIS2 configuration
+
+### For Docker Swarm
+
+- **`.env.swarm`**: Contains environment variables for the Docker Swarm setup
+  - Copy from `.env.swarm.example`: `cp .env.swarm.example .env.swarm`
+  - Database credentials are loaded from secrets, not from this file
+
+These files are mandatory for the application to run properly and are ignored by git to prevent committing sensitive information.
+
 ## Available Commands
 
 ### Docker Compose Commands
@@ -141,6 +159,9 @@ If you encounter issues with the Docker Compose or Docker Swarm commands, check 
 1. Ensure Docker and Docker Compose are properly installed
 2. For Swarm mode, ensure Docker Swarm is initialized
 3. Check that all required secret files exist in the `./secrets` directory
-4. Review the logs for any error messages
+4. Verify that you have created the required environment files:
+   - `.env` for Docker Compose mode
+   - `.env.swarm` for Docker Swarm mode
+5. Review the logs for any error messages
 
 For more detailed information about the DHIS2 Docker environment, including configuration and upgrading components, please refer to [DHIS2.md](DHIS2.md).

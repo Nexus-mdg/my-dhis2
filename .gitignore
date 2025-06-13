@@ -1,3 +1,5 @@
 /.idea/
 /shared/*
 !/shared/.add
+/.env
+/.env.swarm

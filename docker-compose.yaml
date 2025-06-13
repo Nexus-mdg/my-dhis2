@@ -5,10 +5,8 @@ services:
   db:
     container_name: db
     image: postgis/postgis:12-3.3
-    environment:
-      POSTGRES_USER: dhis
-      POSTGRES_PASSWORD: dhis
-      POSTGRES_DB: dhis2
+    env_file:
+      - ./.env
     volumes:
       - "postgresql_data:/var/lib/postgresql/data"
     ports:
@@ -28,16 +26,8 @@ services:
       context: .
       dockerfile: Dockerfile
     tty: true
-    environment:
-      TIMEZONE: "Indian/Antananarivo"
-      DB_HOST: "db"
-      DB_PORT: "5432"
-      DB_NAME: "dhis2"
-      TOMCAT_ARCHIVE_FILE: "apache-tomcat-9.0.106.tar.gz"
-      JAVA_ARCHIVE_FILE: "jdk-17.tar.gz"
-      DHIS2_WARFILE_URL: "https://ingress:8443/dhis2.war"
-      CERT_SUBJECT: "/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost"
-      JAVA_OPTS: "-Xmx3000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
+    env_file:
+      - ./.env
     volumes:
       - "fileResource:/opt/dhis2/files"
       - "logs:/opt/dhis2/logs"
