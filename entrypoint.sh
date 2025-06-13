@@ -18,7 +18,7 @@ tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/jdk
 
 # Download and install Tomcat
 echo "Installing Tomcat..."
-wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/apache-tomcat-9.0.106.tar.gz"
+wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/${TOMCAT_ARCHIVE_FILE}"
 tar -zxvf /opt/tomcat/tomcat.tar.gz -C /opt/tomcat
 
 # Setup Java and Tomcat environment - detect paths dynamically
@@ -114,7 +114,7 @@ if [ "${ENCRYPTED}" == "TRUE" ]; then
     -keyout /opt/tomcat/localhost-rsa-key.pem \
     -out /opt/tomcat/localhost-rsa-cert.pem \
     -days 36500 -passout pass:"$RND" \
-    -subj "/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost"
+    -subj "${CERT_SUBJECT:-/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost}"
 
   # Copy HTTPS configuration
   cp -f /tmp/tomcat-conf-https/* "$CATALINA_HOME"/conf/
