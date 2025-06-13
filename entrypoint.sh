@@ -18,7 +18,7 @@ tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/jdk
 
 # Download and install Tomcat
 echo "Installing Tomcat..."
-wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/apache-tomcat-9.0.106.tar.gz"
+wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/${TOMCAT_ARCHIVE_FILE}"
 tar -zxvf /opt/tomcat/tomcat.tar.gz -C /opt/tomcat
 
 # Setup Java and Tomcat environment - detect paths dynamically
