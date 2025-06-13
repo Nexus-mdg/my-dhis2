@@ -1,23 +1,6 @@
-# Cleanup time
-
+# Docker Compose for DHIS2
 
 services:
-
-  sharer:
-    container_name: sharer
-    build:
-      context: .
-      dockerfile: Dockerfile.sharer
-    volumes:
-      - "./shared:/share"
-    ports:
-      - "8000:8000"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
 
   db:
     container_name: db
@@ -52,7 +35,7 @@ services:
       DB_NAME: "dhis2"
       TOMCAT_ARCHIVE_FILE: "apache-tomcat-9.0.106.tar.gz"
       JAVA_ARCHIVE_FILE: "jdk-17.tar.gz"
-      DHIS2_WARFILE_URL: "http://sharer:8000/dhis2.war"
+      DHIS2_WARFILE_URL: "https://ingress:8443/dhis2.war"
       CERT_SUBJECT: "/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost"
       JAVA_OPTS: "-Xmx3000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
     volumes:
@@ -63,8 +46,22 @@ services:
       # HTTP port removed to enforce HTTPS only
       - "9443:8443"
     depends_on:
-      - sharer
       - db
+
+  ingress:
+    container_name: ingress
+    build:
+      context: ./ingress
+      dockerfile: Dockerfile
+    volumes:
+      - "./shared:/usr/share/nginx/shared"
+    ports:
+      - "80:80"    # HTTP (redirects to HTTPS)
+      - "443:443"  # HTTPS for DHIS2
+      - "444:444"  # HTTPS for Adminer
+      - "8000:8000" # HTTP file sharing (redirects to HTTPS)
+      - "8443:8443" # HTTPS file sharing
+    restart: unless-stopped
 
 volumes:
   fileResource:

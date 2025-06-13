@@ -1,0 +1,525 @@
+diff --git a/.output.txt b/.output.txt
+deleted file mode 100644
+index 7a12f59..0000000
+--- a/.output.txt
++++ /dev/null
+@@ -1,365 +0,0 @@
+-diff --git a/DHIS2.md b/DHIS2.md
+-index c73a569..f6d1cc4 100644
+---- a/DHIS2.md
+-+++ b/DHIS2.md
+-@@ -88,7 +88,7 @@ Tomcat is configured in multiple places. To upgrade Tomcat:
+-
+-    ```bash
+-    # Download Tomcat 9.0.106 and place it in the shared directory
+--   wget -O shared/apache-tomcat-9.0.106.tar.gz https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.106/bin/apache-tomcat-9.0.106.tar.gz
+-+   wget --no-check-certificate -O shared/apache-tomcat-9.0.106.tar.gz https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.106/bin/apache-tomcat-9.0.106.tar.gz
+-    echo "Downloaded Tomcat 9.0.106 to shared directory"
+-    ```
+-
+-diff --git a/Dockerfile b/Dockerfile
+-index 8d7ce7e..bb31826 100644
+---- a/Dockerfile
+-+++ b/Dockerfile
+-@@ -1,8 +1,8 @@
+- FROM ubuntu:20.04
+-
+--# Ensure sharer service is available during build
+-+# Ensure ingress service is available during build
+- # This is a build-time argument that can be passed if needed
+--ARG SHARER_HOST=sharer
+-+ARG SHARER_HOST=ingress
+-
+- RUN apt -y update && \
+-     apt install -y locales \
+-diff --git a/Makefile b/Makefile
+-index d83bb95..4e9d986 100644
+---- a/Makefile
+-+++ b/Makefile
+-@@ -22,7 +22,7 @@ compose-rebuild:
+-        docker compose -f $(COMPOSE_FILE) up -d
+-
+- # Docker Swarm Commands
+--.PHONY: swarm-deploy swarm-remove swarm-update swarm-rebuild swarm-init-secrets
+-+.PHONY: swarm-deploy swarm-redeploy swarm-remove swarm-update swarm-rebuild swarm-init-secrets
+-
+- swarm-init-secrets:
+-        @echo "Creating Docker Swarm secrets from files in ./secrets directory..."
+-@@ -56,6 +56,10 @@ swarm-deploy: swarm-init-secrets
+-        docker compose -f $(SWARM_FILE) build
+-        docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
+-
+-+swarm-redeploy:
+-+       docker compose -f $(SWARM_FILE) build
+-+       docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
+-+
+- swarm-remove:
+-        docker stack rm $(STACK_NAME)
+-        @echo "Removing Docker Swarm secrets..."
+-@@ -106,6 +110,7 @@ help:
+-        @echo "Docker Swarm Commands:"
+-        @echo "  make swarm-init-secrets - Create Docker Swarm secrets from files in ./secrets directory"
+-        @echo "  make swarm-deploy      - Deploy the stack to Docker Swarm (includes creating secrets)"
+-+       @echo "  make swarm-redeploy    - Deploy the stack to Docker Swarm (without creating secrets)"
+-        @echo "  make swarm-remove      - Remove the stack from Docker Swarm and remove secrets"
+-        @echo "  make swarm-update      - Update the stack in Docker Swarm"
+-        @echo "  make swarm-rebuild     - Rebuild images and update the stack"
+-diff --git a/docker-compose.swarm.yaml b/docker-compose.swarm.yaml
+-index e1bece4..2ca5399 100644
+---- a/docker-compose.swarm.yaml
+-+++ b/docker-compose.swarm.yaml
+-@@ -2,33 +2,34 @@ version: '3.8'
+-
+- services:
+-
+--  sharer:
+--    image: dhis2-sharer
+--    build:
+--      context: .
+--      dockerfile: Dockerfile.sharer
+--    volumes:
+--      - "./shared:/share"
+--    ports:
+--      - "8000:8000"
+--    healthcheck:
+--      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
+--      interval: 30s
+--      timeout: 10s
+--      retries: 3
+--      start_period: 30s
+--    deploy:
+--      replicas: 1
+--      resources:
+--        limits:
+--          cpus: '0.5'
+--          memory: 256M
+--        reservations:
+--          cpus: '0.1'
+--          memory: 128M
+--      restart_policy:
+--        condition: on-failure
+--        max_attempts: 3
+-+# Sharer service replaced by ingress service with shared folder
+-+#  sharer:
+-+#    image: dhis2-sharer
+-+#    build:
+-+#      context: .
+-+#      dockerfile: Dockerfile.sharer
+-+#    volumes:
+-+#      - "./shared:/share"
+-+#    ports:
+-+#      - "8000:8000"
+-+#    healthcheck:
+-+#      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
+-+#      interval: 30s
+-+#      timeout: 10s
+-+#      retries: 3
+-+#      start_period: 30s
+-+#    deploy:
+-+#      replicas: 1
+-+#      resources:
+-+#        limits:
+-+#          cpus: '0.5'
+-+#          memory: 256M
+-+#        reservations:
+-+#          cpus: '0.1'
+-+#          memory: 128M
+-+#      restart_policy:
+-+#        condition: on-failure
+-+#        max_attempts: 3
+-
+-   db:
+-     image: postgis/postgis:12-3.3
+-@@ -85,7 +86,7 @@ services:
+-       DB_NAME: "dhis2"
+-       TOMCAT_ARCHIVE_FILE: "apache-tomcat-9.0.106.tar.gz"
+-       JAVA_ARCHIVE_FILE: "jdk-17.tar.gz"
+--      DHIS2_WARFILE_URL: "http://sharer:8000/dhis2.war"
+-+      DHIS2_WARFILE_URL: "https://ingress:8443/dhis2.war"
+-       CERT_SUBJECT: "/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost"
+-       JAVA_OPTS: "-Xmx3000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
+-     volumes:
+-@@ -97,7 +98,6 @@ services:
+-       # HTTP port removed to enforce HTTPS only
+-       - "9443:8443"
+-     depends_on:
+--      - sharer
+-       - db
+-     deploy:
+-       replicas: 1
+-@@ -117,13 +117,14 @@ services:
+-     build:
+-       context: ./ingress
+-       dockerfile: Dockerfile
+-+    volumes:
+-+      - "./shared:/usr/share/nginx/shared"
+-     ports:
+-       - "80:80"    # HTTP (redirects to HTTPS)
+-       - "443:443"  # HTTPS for DHIS2
+-       - "444:444"  # HTTPS for Adminer
+--    depends_on:
+--      - dhis2
+--      - adminer
+-+      - "8000:8000" # HTTP file sharing (redirects to HTTPS)
+-+      - "8443:8443" # HTTPS file sharing
+-     deploy:
+-       replicas: 1
+-       resources:
+-diff --git a/docker-compose.yaml b/docker-compose.yaml
+-index 86502ff..63dcc8b 100644
+---- a/docker-compose.yaml
+-+++ b/docker-compose.yaml
+-@@ -3,21 +3,22 @@
+-
+- services:
+-
+--  sharer:
+--    container_name: sharer
+--    build:
+--      context: .
+--      dockerfile: Dockerfile.sharer
+--    volumes:
+--      - "./shared:/share"
+--    ports:
+--      - "8000:8000"
+--    healthcheck:
+--      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
+--      interval: 30s
+--      timeout: 10s
+--      retries: 3
+--      start_period: 30s
+-+# Sharer service replaced by ingress service with shared folder
+-+#  sharer:
+-+#    container_name: sharer
+-+#    build:
+-+#      context: .
+-+#      dockerfile: Dockerfile.sharer
+-+#    volumes:
+-+#      - "./shared:/share"
+-+#    ports:
+-+#      - "8000:8000"
+-+#    healthcheck:
+-+#      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
+-+#      interval: 30s
+-+#      timeout: 10s
+-+#      retries: 3
+-+#      start_period: 30s
+-
+-   db:
+-     container_name: db
+-@@ -52,7 +53,7 @@ services:
+-       DB_NAME: "dhis2"
+-       TOMCAT_ARCHIVE_FILE: "apache-tomcat-9.0.106.tar.gz"
+-       JAVA_ARCHIVE_FILE: "jdk-17.tar.gz"
+--      DHIS2_WARFILE_URL: "http://sharer:8000/dhis2.war"
+-+      DHIS2_WARFILE_URL: "https://ingress:8443/dhis2.war"
+-       CERT_SUBJECT: "/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost"
+-       JAVA_OPTS: "-Xmx3000m -Xms1000m -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8"
+-     volumes:
+-@@ -63,7 +64,6 @@ services:
+-       # HTTP port removed to enforce HTTPS only
+-       - "9443:8443"
+-     depends_on:
+--      - sharer
+-       - db
+-
+-   ingress:
+-@@ -71,13 +71,14 @@ services:
+-     build:
+-       context: ./ingress
+-       dockerfile: Dockerfile
+-+    volumes:
+-+      - "./shared:/usr/share/nginx/shared"
+-     ports:
+-       - "80:80"    # HTTP (redirects to HTTPS)
+-       - "443:443"  # HTTPS for DHIS2
+-       - "444:444"  # HTTPS for Adminer
+--    depends_on:
+--      - dhis2
+--      - adminer
+-+      - "8000:8000" # HTTP file sharing (redirects to HTTPS)
+-+      - "8443:8443" # HTTPS file sharing
+-     restart: unless-stopped
+-
+- volumes:
+-diff --git a/download_tomcat9.sh b/download_tomcat9.sh
+-index f41a1a5..bb4b713 100755
+---- a/download_tomcat9.sh
+-+++ b/download_tomcat9.sh
+-@@ -1,4 +1,4 @@
+- #!/bin/bash
+- # Download Tomcat 9.0.78 and place it in the shared directory
+--wget -O shared/apache-tomcat-9.0.106.tar.gz https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.106/bin/apache-tomcat-9.0.106.tar.gz
+-+wget --no-check-certificate -O shared/apache-tomcat-9.0.106.tar.gz https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.106/bin/apache-tomcat-9.0.106.tar.gz
+- echo "Downloaded Tomcat 9.0.78 to shared directory"
+-diff --git a/entrypoint.sh b/entrypoint.sh
+-index 6b5d02c..80f4c50 100755
+---- a/entrypoint.sh
+-+++ b/entrypoint.sh
+-@@ -3,22 +3,22 @@ set -e
+-
+- echo "Starting DHIS2 container setup..."
+-
+--# Wait for sharer service to be ready
+--echo "Waiting for sharer service..."
+--until wget --spider -q http://sharer:8000 2>/dev/null; do
+--    echo "Sharer not ready, waiting 5 seconds..."
+-+# Wait for ingress service to be ready
+-+echo "Waiting for ingress service..."
+-+until wget --spider -q --no-check-certificate https://ingress:8443 2>/dev/null; do
+-+    echo "Ingress file sharing not ready, waiting 5 seconds..."
+-     sleep 5
+- done
+--echo "Sharer service is ready!"
+-+echo "Ingress file sharing is ready!"
+-
+- # Download and install JDK
+- echo "Installing JDK ..."
+--wget -O /pkg/openjdk.tar.gz "http://sharer:8000/${JAVA_ARCHIVE_FILE}"
+-+wget -O /pkg/openjdk.tar.gz --no-check-certificate "https://ingress:8443/${JAVA_ARCHIVE_FILE}"
+- tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/jdk
+-
+- # Download and install Tomcat
+- echo "Installing Tomcat..."
+--wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/${TOMCAT_ARCHIVE_FILE}"
+-+wget -O /opt/tomcat/tomcat.tar.gz --no-check-certificate "https://ingress:8443/${TOMCAT_ARCHIVE_FILE}"
+- tar -zxvf /opt/tomcat/tomcat.tar.gz -C /opt/tomcat
+-
+- # Setup Java and Tomcat environment - detect paths dynamically
+-@@ -123,7 +123,7 @@ sed -i 's/PEMsPassphrase/'"$RND"'/g' "$CATALINA_HOME"/conf/server.xml
+- # Download DHIS2 WAR file
+- if [ -n "$DHIS2_WARFILE_URL" ]; then
+-   echo "Downloading DHIS2 warfile from $DHIS2_WARFILE_URL"
+--  curl -o "$CATALINA_HOME"/webapps/ROOT.war "$DHIS2_WARFILE_URL"
+-+  curl -k -o "$CATALINA_HOME"/webapps/ROOT.war "$DHIS2_WARFILE_URL"
+- else
+-   echo "Warning: DHIS2_WARFILE_URL not set, skipping WAR file download"
+- fi
+-diff --git a/ingress/Dockerfile b/ingress/Dockerfile
+-index 25d1fc4..3f42b88 100644
+---- a/ingress/Dockerfile
+-+++ b/ingress/Dockerfile
+-@@ -10,8 +10,8 @@ COPY nginx.conf /etc/nginx/nginx.conf
+- COPY generate-certs.sh /usr/local/bin/
+- RUN chmod +x /usr/local/bin/generate-certs.sh
+-
+--# Create directory for SSL certificates
+--RUN mkdir -p /etc/nginx/ssl
+-+# Create directory for SSL certificates and shared files
+-+RUN mkdir -p /etc/nginx/ssl /usr/share/nginx/shared
+-
+- # Generate self-signed certificates on container start
+--CMD ["/bin/bash", "-c", "/usr/local/bin/generate-certs.sh && nginx -g 'daemon off;'"]
+-\ No newline at end of file
+-+CMD ["/bin/bash", "-c", "/usr/local/bin/generate-certs.sh && nginx -g 'daemon off;'"]
+-diff --git a/ingress/nginx.conf b/ingress/nginx.conf
+-index 963712c..8c1aa4c 100644
+---- a/ingress/nginx.conf
+-+++ b/ingress/nginx.conf
+-@@ -58,10 +58,14 @@ http {
+-             proxy_set_header Upgrade $http_upgrade;
+-             proxy_set_header Connection "upgrade";
+-
+--            # Timeout settings
+--            proxy_connect_timeout 90;
+--            proxy_send_timeout 90;
+--            proxy_read_timeout 90;
+-+            # Timeout settings - increased for DHIS2
+-+            proxy_connect_timeout 300;
+-+            proxy_send_timeout 300;
+-+            proxy_read_timeout 300;
+-+
+-+            # SSL verification settings for internal services
+-+            proxy_ssl_verify off;
+-+            proxy_ssl_session_reuse on;
+-         }
+-     }
+-
+-@@ -88,4 +92,33 @@ http {
+-         server_name dhis2.local adminer.local;
+-         return 301 https://$host$request_uri;
+-     }
+-+
+-+    # File sharing server (replacement for sharer service) with HTTPS
+-+    server {
+-+        listen 8443 ssl;
+-+        server_name localhost;
+-+
+-+        ssl_certificate /etc/nginx/ssl/nginx.crt;
+-+        ssl_certificate_key /etc/nginx/ssl/nginx.key;
+-+
+-+        location / {
+-+            root /usr/share/nginx/shared;
+-+            autoindex on;
+-+            autoindex_exact_size off;
+-+            autoindex_localtime on;
+-+
+-+            # Allow large file uploads
+-+            client_max_body_size 500M;
+-+
+-+            # Set appropriate headers for downloads
+-+            add_header Content-Disposition "attachment";
+-+        }
+-+    }
+-+
+-+    # Redirect HTTP file sharing to HTTPS
+-+    server {
+-+        listen 8000;
+-+        server_name localhost;
+-+        return 301 https://$host:8443$request_uri;
+-+    }
+- }
+\ No newline at end of file
+diff --git a/DHIS2.md b/DHIS2.md
+index f6d1cc4..bdaaea2 100644
+--- a/DHIS2.md
++++ b/DHIS2.md
+@@ -32,7 +32,7 @@ This will start the following services:
+ - DHIS2 application server (using Tomcat 9.0.78)
+ - PostgreSQL database
+ - Adminer (for database management)
+-- Sharer (for sharing files between containers)
++- Ingress (for reverse proxy and file sharing)
+
+ ## Configuration
+
+@@ -81,7 +81,7 @@ Tomcat is configured in multiple places. To upgrade Tomcat:
+    b. `entrypoint.sh`: Update the Tomcat download URL:
+
+    ```bash
+-   wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/apache-tomcat-9.0.106.tar.gz"  # Change to your new Tomcat version
++   wget -O /opt/tomcat/tomcat.tar.gz --no-check-certificate "https://ingress:8443/${TOMCAT_ARCHIVE_FILE}"  # Change to your new Tomcat version
+    ```
+
+    c. `download_tomcat9.sh`: Update the script to download the correct version:
+diff --git a/Dockerfile b/Dockerfile
+index bb31826..dbdda8f 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -2,7 +2,7 @@ FROM ubuntu:20.04
+
+ # Ensure ingress service is available during build
+ # This is a build-time argument that can be passed if needed
+-ARG SHARER_HOST=ingress
++ARG INGRESS_HOST=ingress
+
+ RUN apt -y update && \
+     apt install -y locales \
+diff --git a/Dockerfile.sharer b/Dockerfile.sharer
+deleted file mode 100644
+index c42ca72..0000000
+--- a/Dockerfile.sharer
++++ /dev/null
+@@ -1,11 +0,0 @@
+-FROM ubuntu:22.04
+-
+-RUN apt -y update && \
+-    apt install -y curl \
+-    python3
+-
+-WORKDIR /share
+-
+-EXPOSE 8000
+-
+-CMD ["python3", "-m", "http.server"]
+\ No newline at end of file
+diff --git a/SWARM.md b/SWARM.md
+index 4576163..3598c79 100644
+--- a/SWARM.md
++++ b/SWARM.md
+@@ -143,10 +143,10 @@ docker volume rm dhis2_postgresql_data dhis2_fileResource dhis2_logs
+
+ The docker-compose.swarm.yaml file defines resource limits for each service:
+
+-- **sharer**: 0.5 CPU, 256MB memory
+ - **db**: 1.0 CPU, 1GB memory
+ - **adminer**: 0.3 CPU, 128MB memory
+ - **dhis2**: 2.0 CPU, 4GB memory
++- **ingress**: 0.5 CPU, 256MB memory
+
+ To monitor resource usage:
+
+diff --git a/docker-compose.swarm.yaml b/docker-compose.swarm.yaml
+index 2ca5399..1d6ae91 100644
+--- a/docker-compose.swarm.yaml
++++ b/docker-compose.swarm.yaml
+@@ -2,35 +2,6 @@ version: '3.8'
+
+ services:
+
+-# Sharer service replaced by ingress service with shared folder
+-#  sharer:
+-#    image: dhis2-sharer
+-#    build:
+-#      context: .
+-#      dockerfile: Dockerfile.sharer
+-#    volumes:
+-#      - "./shared:/share"
+-#    ports:
+-#      - "8000:8000"
+-#    healthcheck:
+-#      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
+-#      interval: 30s
+-#      timeout: 10s
+-#      retries: 3
+-#      start_period: 30s
+-#    deploy:
+-#      replicas: 1
+-#      resources:
+-#        limits:
+-#          cpus: '0.5'
+-#          memory: 256M
+-#        reservations:
+-#          cpus: '0.1'
+-#          memory: 128M
+-#      restart_policy:
+-#        condition: on-failure
+-#        max_attempts: 3
+-
+   db:
+     image: postgis/postgis:12-3.3
+     volumes:
+diff --git a/docker-compose.yaml b/docker-compose.yaml
+index 63dcc8b..015293b 100644
+--- a/docker-compose.yaml
++++ b/docker-compose.yaml
+@@ -1,25 +1,7 @@
+-# Cleanup time
+-
++# Docker Compose for DHIS2
+
+ services:
+
+-# Sharer service replaced by ingress service with shared folder
+-#  sharer:
+-#    container_name: sharer
+-#    build:
+-#      context: .
+-#      dockerfile: Dockerfile.sharer
+-#    volumes:
+-#      - "./shared:/share"
+-#    ports:
+-#      - "8000:8000"
+-#    healthcheck:
+-#      test: [ "CMD", "curl", "-f", "http://localhost:8000" ]
+-#      interval: 30s
+-#      timeout: 10s
+-#      retries: 3
+-#      start_period: 30s
+-
+   db:
+     container_name: db
+     image: postgis/postgis:12-3.3
+diff --git a/ingress/nginx.conf b/ingress/nginx.conf
+index 8c1aa4c..257481f 100644
+--- a/ingress/nginx.conf
++++ b/ingress/nginx.conf
+@@ -93,7 +93,7 @@ http {
+         return 301 https://$host$request_uri;
+     }
+
+-    # File sharing server (replacement for sharer service) with HTTPS
++    # File sharing server with HTTPS for distributing files to containers
+     server {
+         listen 8443 ssl;
+         server_name localhost;

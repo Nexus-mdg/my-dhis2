@@ -22,7 +22,7 @@ compose-rebuild:
 	docker compose -f $(COMPOSE_FILE) up -d
 
 # Docker Swarm Commands
-.PHONY: swarm-deploy swarm-remove swarm-update swarm-rebuild swarm-init-secrets
+.PHONY: swarm-deploy swarm-redeploy swarm-remove swarm-update swarm-rebuild swarm-init-secrets
 
 swarm-init-secrets:
 	@echo "Creating Docker Swarm secrets from files in ./secrets directory..."
@@ -53,6 +53,10 @@ swarm-init-secrets:
 	@echo "All secrets created successfully"
 
 swarm-deploy: swarm-init-secrets
+	docker compose -f $(SWARM_FILE) build
+	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
+
+swarm-redeploy:
 	docker compose -f $(SWARM_FILE) build
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
@@ -106,6 +110,7 @@ help:
 	@echo "Docker Swarm Commands:"
 	@echo "  make swarm-init-secrets - Create Docker Swarm secrets from files in ./secrets directory"
 	@echo "  make swarm-deploy      - Deploy the stack to Docker Swarm (includes creating secrets)"
+	@echo "  make swarm-redeploy    - Deploy the stack to Docker Swarm (without creating secrets)"
 	@echo "  make swarm-remove      - Remove the stack from Docker Swarm and remove secrets"
 	@echo "  make swarm-update      - Update the stack in Docker Swarm"
 	@echo "  make swarm-rebuild     - Rebuild images and update the stack"

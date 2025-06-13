@@ -1,8 +1,8 @@
 FROM ubuntu:20.04
 
-# Ensure sharer service is available during build
+# Ensure ingress service is available during build
 # This is a build-time argument that can be passed if needed
-ARG SHARER_HOST=sharer
+ARG INGRESS_HOST=ingress
 
 RUN apt -y update && \
     apt install -y locales \
