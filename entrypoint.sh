@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
 set -e
 
+wget -O /pkg/openjdk.tar.gz "http://sharer:8000/jdk-11.tar.gz"
+tar -zxvf /pkg/openjdk.tar.gz -C /opt/java/11
+wget -O /opt/tomcat/tomcat.tar.gz "http://sharer:8000/apache-tomcat-8.5.47.tar.gz"
+tar -zxvf /opt/tomcat/tomcat.tar.gz -C /opt/tomcat
+
+# APR
+WORKDIR $CATALINA_HOME/bin/
+RUN tar -xvzf $CATALINA_HOME/bin/tomcat-native.tar.gz
+WORKDIR $CATALINA_HOME/bin/tomcat-native-1.2.23-src/native
+RUN echo $(ls -1 $CATALINA_HOME/bin/tomcat-native-1.2.23-src/native)
+RUN ./configure && make && make install
+ENV LD_LIBRARY_PATH=/usr/local/apr/lib
+
+rm -R $CATALINA_HOME/webapps/*
+
+
+
 # Only JDK 11 is supported now
 export JAVA_HOME=$JAVA11_DIR
 PATH=$PATH:"$JAVA_HOME"/bin

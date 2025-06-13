@@ -1,4 +1,4 @@
-version: '3.9'
+# Cleanup time
 
 
 services:
@@ -20,8 +20,8 @@ services:
       POSTGRES_USER: dhis
       POSTGRES_PASSWORD: dhis
       POSTGRES_DB: dhis2
-#    volumes:
-#      - "postgresql_data:/var/lib/postgresql/data"
+    volumes:
+      - "postgresql_data:/var/lib/postgresql/data"
     ports:
       - "5432:5432"
 
@@ -35,7 +35,9 @@ services:
 
   dhis2:
     container_name: dhis2
-    image: subvers.dhis2:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     tty: true
     environment:
       ENCRYPTED: "TRUE"
@@ -51,8 +53,9 @@ services:
       - "./credentials:/run/secrets/credentials"
     ports:
       - "8080:8080"
-      - "8443:8443"
+      - "9443:8443"
     depends_on:
+      - sharer
       - db
 
 volumes:
