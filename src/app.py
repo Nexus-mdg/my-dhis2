@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-DHIS2 Admin Password Changer
-Changes the default admin user password to a UUID-based password
+DHIS2 Root User Creator
+Creates a new 'root' user with UUID-based password
 """
 
 import requests
@@ -16,8 +16,8 @@ from requests.auth import HTTPBasicAuth
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-class DHIS2PasswordChanger:
-    def __init__(self, base_url, username="admin", password="district"):
+class DHIS2RootUserCreator:
+    def __init__(self, base_url, username, password):
         self.base_url = base_url.rstrip('/')
         self.username = username
         self.password = password
@@ -26,18 +26,38 @@ class DHIS2PasswordChanger:
         self.session.auth = HTTPBasicAuth(username, password)
 
     def generate_new_password(self):
-        """Generate a new password from the first part of a UUID4"""
+        """Generate a new password from the first part of a UUID4 with all requirements"""
         new_uuid = str(uuid.uuid4())
         password_part = new_uuid.split('-')[0]
-        return new_uuid, password_part
+        # Add uppercase, special character, and number to meet DHIS2 password requirements
+        password_with_requirements = password_part.capitalize() + "@1"  # Add special char and number
+        return new_uuid, password_with_requirements
 
-    def get_admin_user(self):
-        """Get the admin user details"""
+    def check_root_user_exists(self):
+        """Check if root user already exists"""
+        try:
+            url = f"{self.base_url}/api/users"
+            params = {
+                'filter': 'userCredentials.username:eq:root',
+                'fields': 'id,userCredentials[username,id]'
+            }
+
+            response = self.session.get(url, params=params)
+            response.raise_for_status()
+
+            users = response.json().get('users', [])
+            return users[0] if users else None
+
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to check root user: {e}")
+
+    def get_admin_user_for_template(self):
+        """Get the admin user details to use as template"""
         try:
             url = f"{self.base_url}/api/users"
             params = {
                 'filter': f'userCredentials.username:eq:{self.username}',
-                'fields': 'id,userCredentials[username,id]'
+                'fields': '*'
             }
 
             response = self.session.get(url, params=params)
@@ -50,36 +70,103 @@ class DHIS2PasswordChanger:
             return users[0]
 
         except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to get user details: {e}")
+            raise Exception(f"Failed to get admin user details: {e}")
 
-    def update_password(self, user_id, new_password):
-        """Update the user's password"""
+    def create_root_user(self, new_password):
+        """Create a new root user with admin privileges"""
         try:
-            url = f"{self.base_url}/api/users/{user_id}"
+            # Get admin user as template
+            admin_user = self.get_admin_user_for_template()
 
-            # First get the full user object
-            response = self.session.get(url)
+            # Generate proper DHIS2 UIDs (11 characters, must start with letter)
+            root_user_id = 'R' + str(uuid.uuid4()).replace('-', '')[:10]  # Start with 'R'
+            root_cred_id = 'C' + str(uuid.uuid4()).replace('-', '')[:10]  # Start with 'C'
+
+            # Create root user payload based on admin user
+            root_user = {
+                "id": root_user_id,
+                "firstName": "Root",
+                "surname": "Administrator",
+                "email": "root@example.com",  # Simple valid email
+                "userCredentials": {
+                    "id": root_cred_id,
+                    "username": "root",
+                    "password": new_password,
+                    "disabled": False,
+                    "accountNonExpired": True,
+                    "credentialsNonExpired": True,
+                    "accountNonLocked": True,
+                    "twoFA": False,
+                    "externalAuth": False,
+                    "openId": "",
+                    "ldapId": "",
+                    "userRoles": admin_user.get('userCredentials', {}).get('userRoles', [])
+                },
+                "organisationUnits": admin_user.get('organisationUnits', []),
+                "dataViewOrganisationUnits": admin_user.get('dataViewOrganisationUnits', []),
+                "teiSearchOrganisationUnits": admin_user.get('teiSearchOrganisationUnits', []),
+                "userGroups": admin_user.get('userGroups', [])
+            }
+
+            # Create the user
+            url = f"{self.base_url}/api/users"
+            response = self.session.post(url, json=root_user)
             response.raise_for_status()
-            user_data = response.json()
 
-            # Update the password in userCredentials
-            user_data['userCredentials']['password'] = new_password
+            print(f"[DHIS2] Root user created successfully with ID: {root_user_id}")
+            return root_user_id
 
-            # Send the update
-            response = self.session.put(url, json=user_data)
+        except requests.exceptions.RequestException as e:
+            # Print more detailed error info
+            error_detail = ""
+            try:
+                if hasattr(e, 'response') and e.response is not None:
+                    error_detail = f" - Response: {e.response.text}"
+            except:
+                pass
+            raise Exception(f"Failed to create root user: {e}{error_detail}")
+
+    def update_root_password(self, user_id, new_password):
+        """Update root user's password if it already exists"""
+        try:
+            # Try the simpler userCredentials update approach for existing users
+            url = f"{self.base_url}/api/userCredentials"
+
+            # Get user credentials
+            response = self.session.get(f"{url}?filter=username:eq:root&fields=*")
             response.raise_for_status()
 
+            user_creds = response.json().get('userCredentials', [])
+            if not user_creds:
+                raise Exception("Root user credentials not found")
+
+            user_cred = user_creds[0]
+            user_cred_id = user_cred['id']
+
+            # Update password
+            user_cred['password'] = new_password
+
+            response = self.session.put(f"{url}/{user_cred_id}", json=user_cred)
+            response.raise_for_status()
+
+            print(f"[DHIS2] Root user password updated successfully")
             return True
 
         except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to update password: {e}")
+            error_detail = ""
+            try:
+                if hasattr(e, 'response') and e.response is not None:
+                    error_detail = f" - Response: {e.response.text}"
+            except:
+                pass
+            raise Exception(f"Failed to update root password: {e}{error_detail}")
 
-    def verify_new_credentials(self, new_password):
-        """Verify the new password works"""
+    def verify_root_credentials(self, new_password):
+        """Verify the new root credentials work"""
         try:
             test_session = requests.Session()
             test_session.verify = False
-            test_session.auth = HTTPBasicAuth(self.username, new_password)
+            test_session.auth = HTTPBasicAuth("root", new_password)
 
             url = f"{self.base_url}/api/me"
             response = test_session.get(url)
@@ -90,39 +177,52 @@ class DHIS2PasswordChanger:
         except requests.exceptions.RequestException:
             return False
 
-    def change_password(self):
-        """Main method to change the password"""
+    def setup_root_user(self):
+        """Main method to create/update root user"""
         try:
             print("[DHIS2] Connecting to DHIS2 at:", self.base_url)
-            print("[DHIS2] Using current credentials:", f"{self.username} / {self.password}")
+            print("[DHIS2] Using current credentials:", f"{self.username} / {'*' * len(self.password)}")
 
-            # Get admin user details
-            print("[DHIS2] Getting admin user details...")
-            admin_user = self.get_admin_user()
-            user_id = admin_user['id']
-            print("[DHIS2] Found user ID:", user_id)
+            # Test connection first
+            print("[DHIS2] Testing connection...")
+            test_response = self.session.get(f"{self.base_url}/api/me")
+            test_response.raise_for_status()
+            print(f"[DHIS2] Connection successful, user: {test_response.json().get('name', 'Unknown')}")
+
+            # Check if root user already exists
+            print("[DHIS2] Checking if root user already exists...")
+            existing_root = self.check_root_user_exists()
 
             # Generate new password
             full_uuid, new_password = self.generate_new_password()
             print("[DHIS2] Generated UUID:", full_uuid)
-            print("[DHIS2] New password:", new_password)
+            print("[DHIS2] New password for root user:", new_password)
 
-            # Update password
-            print("[DHIS2] Updating password...")
-            self.update_password(user_id, new_password)
+            if existing_root:
+                print(f"[DHIS2] Root user already exists with ID: {existing_root['id']}")
+                print("[DHIS2] Updating existing root user password...")
+                self.update_root_password(existing_root['id'], new_password)
+                user_id = existing_root['id']
+                action = 'updated'
+            else:
+                print("[DHIS2] Root user doesn't exist, creating new root user...")
+                user_id = self.create_root_user(new_password)
+                action = 'created'
 
             # Verify new credentials
-            print("[DHIS2] Verifying new credentials...")
-            if self.verify_new_credentials(new_password):
-                print("[DHIS2] ✅ Password changed successfully!")
+            print("[DHIS2] Verifying new root credentials...")
+            if self.verify_root_credentials(new_password):
+                print("[DHIS2] ✅ Root user setup completed successfully!")
                 return {
                     'success': True,
-                    'username': self.username,
+                    'username': 'root',
                     'new_password': new_password,
-                    'full_uuid': full_uuid
+                    'full_uuid': full_uuid,
+                    'user_id': user_id,
+                    'action': action
                 }
             else:
-                print("[DHIS2] ❌ Password update failed - verification unsuccessful")
+                print("[DHIS2] ❌ Root user setup failed - verification unsuccessful")
                 return {'success': False, 'error': 'Verification failed'}
 
         except Exception as e:
@@ -138,7 +238,7 @@ def write_credentials_file(result, dhis2_url):
     try:
         with open(filename, 'w') as f:
             f.write("=" * 80 + "\n")
-            f.write("🎉 DHIS2 ADMIN PASSWORD CHANGED SUCCESSFULLY\n")
+            f.write(f"🎉 DHIS2 ROOT USER {result.get('action', 'CREATED').upper()} SUCCESSFULLY\n")
             f.write("=" * 80 + "\n\n")
 
             f.write("📋 COPY THESE CREDENTIALS:\n")
@@ -153,10 +253,6 @@ def write_credentials_file(result, dhis2_url):
             f.write("🆔 FULL UUID REFERENCE:\n")
             f.write(f"{result['full_uuid']}\n\n")
 
-            f.write("=" * 80 + "\n")
-            f.write("⚠️  IMPORTANT: Save these credentials in a secure location!\n")
-            f.write("=" * 80 + "\n\n")
-
             f.write("📋 QUICK COPY-PASTE SECTION:\n")
             f.write("┌" + "─" * 50 + "┐\n")
             f.write(f"│ Username: {result['username']:<37} │\n")
@@ -165,6 +261,7 @@ def write_credentials_file(result, dhis2_url):
 
             f.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"DHIS2 URL: {dhis2_url}\n")
+            f.write(f"Action: Root user {result.get('action', 'created')}\n")
 
         # Set file permissions to be readable only by owner
         os.chmod(filename, 0o600)
@@ -181,20 +278,23 @@ def main():
 
     if not DHIS2_URL:
         print("[DHIS2] ❌ DHIS2_URL environment variable is required")
-        print("[DHIS2] Set it with: export DHIS2_URL=https://your-dhis2-server.com")
         return
 
     print(f"[DHIS2] Using DHIS2 URL from environment: {DHIS2_URL}")
 
-    # Optional: customize credentials from environment or use defaults
-    username = os.getenv('DHIS2_USERNAME', 'admin')
-    password = os.getenv('DHIS2_PASSWORD', 'district')
+    # Get credentials from environment
+    username = os.getenv('DHIS2_USERNAME')
+    password = os.getenv('DHIS2_PASSWORD')
+
+    if not username or not password:
+        print("[DHIS2] ❌ DHIS2_USERNAME and DHIS2_PASSWORD environment variables are required")
+        return
 
     print(f"[DHIS2] Using credentials: {username} / {'*' * len(password)}")
 
-    # Create password changer and execute
-    changer = DHIS2PasswordChanger(DHIS2_URL, username, password)
-    result = changer.change_password()
+    # Create root user creator and execute
+    creator = DHIS2RootUserCreator(DHIS2_URL, username, password)
+    result = creator.setup_root_user()
 
     if result['success']:
         # Write credentials to file
@@ -203,7 +303,7 @@ def main():
         if credentials_file:
             print()
             print("=" * 80)
-            print("🎉 DHIS2 ADMIN PASSWORD CHANGED SUCCESSFULLY")
+            print(f"🎉 DHIS2 ROOT USER {result['action'].upper()} SUCCESSFULLY")
             print("=" * 80)
             print()
             print("📁 CREDENTIALS SAVED TO FILE:")
@@ -218,13 +318,11 @@ def main():
             print(f"   URL: {DHIS2_URL}/dhis-web-commons/security/login.action")
             print()
             print("=" * 80)
-            print("⚠️  Credentials file is readable only by owner (chmod 600)")
-            print("=" * 80)
         else:
             # Fallback to console output if file writing fails
             print()
             print("=" * 80)
-            print("🎉 DHIS2 ADMIN PASSWORD CHANGED SUCCESSFULLY")
+            print(f"🎉 DHIS2 ROOT USER {result['action'].upper()} SUCCESSFULLY")
             print("=" * 80)
             print(f"Username: {result['username']}")
             print(f"Password: {result['new_password']}")
@@ -232,15 +330,7 @@ def main():
             print("=" * 80)
 
     else:
-        print(f"[DHIS2] ❌ Failed to change password: {result['error']}")
-
-
-def run_entrypoint():
-    """Entry point function for container usage"""
-    print()
-    print("🚀 DHIS2 Password Changer - Container Entry Point")
-    print("=" * 60)
-    main()
+        print(f"[DHIS2] ❌ Failed to setup root user: {result['error']}")
 
 
 if __name__ == "__main__":
