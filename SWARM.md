@@ -147,6 +147,7 @@ The docker-compose.swarm.yaml file defines resource limits for each service:
 - **adminer**: 0.3 CPU, 128MB memory
 - **dhis2**: 2.0 CPU, 4GB memory
 - **ingress**: 0.5 CPU, 256MB memory
+- **init**: 0.3 CPU, 256MB memory (one-time execution service)
 
 To monitor resource usage:
 
@@ -197,6 +198,11 @@ The stack uses Docker Swarm secrets to securely manage sensitive information for
      - Line 2: Database password (same as in `postgres-password`)
      - Line 3: Encryption password (unique to this file)
 
+3. **DHIS2 Admin Credentials**: Used by the init service:
+   - `secrets/dhis2-admin-credentials`: Contains two lines:
+     - Line 1: Admin username (default: admin)
+     - Line 2: Admin password (default: district)
+
 To create or update these secrets:
 
 ```bash
@@ -213,6 +219,10 @@ echo "your_username" > secrets/credentials
 echo "your_secure_password" >> secrets/credentials
 echo "your_encryption_password" >> secrets/credentials
 
+# Create DHIS2 admin credentials file for init service
+echo "admin" > secrets/dhis2-admin-credentials
+echo "district" >> secrets/dhis2-admin-credentials
+
 # Update the stack to use the new secrets
 docker stack deploy -c docker-compose.swarm.yaml dhis2
 ```
@@ -227,9 +237,9 @@ To remove a secret (requires removing the stack first):
 
 ```bash
 docker stack rm dhis2
-docker secret rm postgres-user postgres-password postgres-db credentials
+docker secret rm postgres-user postgres-password postgres-db credentials dhis2-admin-credentials
 # Also remove the local secret files if no longer needed
-rm -f secrets/postgres-user secrets/postgres-password secrets/postgres-db secrets/credentials
+rm -f secrets/postgres-user secrets/postgres-password secrets/postgres-db secrets/credentials secrets/dhis2-admin-credentials
 ```
 
 ### General Security Recommendations
