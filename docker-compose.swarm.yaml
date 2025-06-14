@@ -2,8 +2,12 @@ services:
 
   db:
     image: postgis/postgis:12-3.3
-    volumes:
-      - "postgresql_data:/var/lib/postgresql/data"
+#    volumes:
+#      - "postgresql_data:/var/lib/postgresql/data"
+    environment:
+      - POSTGRES_USER_FILE=/run/secrets/postgres-user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-password
+      - POSTGRES_DB_FILE=/run/secrets/postgres-db
     secrets:
       - postgres-user
       - postgres-password
@@ -50,9 +54,9 @@ services:
     tty: true
     env_file:
       - ./.env.swarm
-    volumes:
-      - "fileResource:/opt/dhis2/files"
-      - "logs:/opt/dhis2/logs"
+#    volumes:
+#      - "fileResource:/opt/dhis2/files"
+#      - "logs:/opt/dhis2/logs"
     secrets:
       - credentials
     ports:

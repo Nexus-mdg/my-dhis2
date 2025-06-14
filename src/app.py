@@ -29,8 +29,10 @@ class DHIS2RootUserCreator:
         """Generate a new password from the first part of a UUID4 with all requirements"""
         new_uuid = str(uuid.uuid4())
         password_part = new_uuid.split('-')[0]
-        # Add uppercase, special character, and number to meet DHIS2 password requirements
-        password_with_requirements = password_part.capitalize() + "@1"  # Add special char and number
+        # Ensure we have uppercase, lowercase, number, and special character
+        # Take first 6 chars, make some uppercase, add requirements
+        base = password_part[:6]
+        password_with_requirements = base.upper()[:2] + base.lower()[2:4] + "1@PWD_" + base.upper()[4:6]
         return new_uuid, password_with_requirements
 
     def check_root_user_exists(self):
@@ -231,9 +233,9 @@ class DHIS2RootUserCreator:
 
 
 def write_credentials_file(result, dhis2_url):
-    """Write credentials to a file in /app/secrets for easy access"""
+    """Write credentials to a file in /app for easy access"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"/app/secrets/dhis2_credentials_{timestamp}.txt"
+    filename = f"/app/dhis2_credentials_{timestamp}.txt"
 
     try:
         with open(filename, 'w') as f:
