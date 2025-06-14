@@ -107,6 +107,7 @@ services:
     image: python:3.9-slim
     volumes:
       - "./src:/app"
+      - "./src/secrets:/app/secrets"
     working_dir: /app
     command: >
       bash -c "apt-get update && apt-get install -y curl && 
