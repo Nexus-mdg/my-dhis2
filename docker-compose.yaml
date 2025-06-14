@@ -5,12 +5,19 @@ services:
   db:
     container_name: db
     image: postgis/postgis:12-3.3
-    env_file:
-      - ./.env
+    environment:
+      - POSTGRES_USER_FILE=/run/secrets/postgres-user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-password
+      - POSTGRES_DB_FILE=/run/secrets/postgres-db
+    secrets:
+      - postgres-user
+      - postgres-password
+      - postgres-db
     volumes:
       - "postgresql_data:/var/lib/postgresql/data"
     ports:
       - "5432:5432"
+    restart: on-failure
 
   adminer:
     container_name: adminer
@@ -19,6 +26,7 @@ services:
       - "8081:8080"
     depends_on:
       - db
+    restart: on-failure
 
   dhis2:
     container_name: dhis2
@@ -28,15 +36,17 @@ services:
     tty: true
     env_file:
       - ./.env
+    secrets:
+      - credentials
     volumes:
       - "fileResource:/opt/dhis2/files"
       - "logs:/opt/dhis2/logs"
-      - "./credentials:/run/secrets/credentials"
     ports:
       # HTTP port removed to enforce HTTPS only
       - "9443:8443"
     depends_on:
       - db
+    restart: on-failure
 
   ingress:
     container_name: ingress
@@ -51,13 +61,14 @@ services:
       - "444:444"  # HTTPS for Adminer
       - "8000:8000" # HTTP file sharing (redirects to HTTPS)
       - "8443:8443" # HTTPS file sharing
-    restart: unless-stopped
+    restart: on-failure
 
   init:
     container_name: init
     image: python:3.9-slim
     volumes:
       - "./src:/app"
+      - "./src/secrets:/app/secrets"
     working_dir: /app
     command: >
       bash -c "apt-get update && apt-get install -y curl && 
@@ -68,13 +79,17 @@ services:
       done && 
       echo 'DHIS2 is ready, proceeding with password change...' && 
       pip install -r requirements.txt && 
+      export DHIS2_USERNAME=$$(head -n 1 /run/secrets/admin-credentials) && 
+      export DHIS2_PASSWORD=$$(head -n 2 /run/secrets/admin-credentials | tail -n 1) && 
+      echo 'Using credentials from secret file' && 
       python app.py && 
       chmod -R 777 /app && 
       echo 'Password change completed, stopping container...'"
     environment:
       - DHIS2_URL=https://dhis2:8443
-      - DHIS2_USERNAME=admin
-      - DHIS2_PASSWORD=district
+    secrets:
+      - source: dhis2-admin-credentials
+        target: admin-credentials
     depends_on:
       - dhis2
     restart: "no"
@@ -83,3 +98,18 @@ volumes:
   fileResource:
   logs:
   postgresql_data:
+
+networks:
+  default:
+
+secrets:
+  postgres-user:
+    file: ./secrets/postgres-user
+  postgres-password:
+    file: ./secrets/postgres-password
+  postgres-db:
+    file: ./secrets/postgres-db
+  credentials:
+    file: ./secrets/credentials
+  dhis2-admin-credentials:
+    file: ./secrets/dhis2-admin-credentials
