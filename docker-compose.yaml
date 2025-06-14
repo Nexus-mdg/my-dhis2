@@ -5,14 +5,8 @@ services:
   db:
     container_name: db
     image: postgis/postgis:12-3.3
-    environment:
-      - POSTGRES_USER_FILE=/run/secrets/postgres-user
-      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-password
-      - POSTGRES_DB_FILE=/run/secrets/postgres-db
-    secrets:
-      - postgres-user
-      - postgres-password
-      - postgres-db
+    env_file:
+      - ./.env
     volumes:
       - "postgresql_data:/var/lib/postgresql/data"
     ports:
@@ -36,8 +30,6 @@ services:
     tty: true
     env_file:
       - ./.env
-    secrets:
-      - credentials
     volumes:
       - "fileResource:/opt/dhis2/files"
       - "logs:/opt/dhis2/logs"
@@ -79,17 +71,13 @@ services:
       done && 
       echo 'DHIS2 is ready, proceeding with password change...' && 
       pip install -r requirements.txt && 
-      export DHIS2_USERNAME=$$(head -n 1 /run/secrets/admin-credentials) && 
-      export DHIS2_PASSWORD=$$(head -n 2 /run/secrets/admin-credentials | tail -n 1) && 
-      echo 'Using credentials from secret file' && 
       python app.py && 
       chmod -R 777 /app && 
       echo 'Password change completed, stopping container...'"
     environment:
       - DHIS2_URL=https://dhis2:8443
-    secrets:
-      - source: dhis2-admin-credentials
-        target: admin-credentials
+      - DHIS2_USERNAME=admin
+      - DHIS2_PASSWORD=district
     depends_on:
       - dhis2
     restart: "no"
@@ -102,14 +90,3 @@ volumes:
 networks:
   default:
 
-secrets:
-  postgres-user:
-    file: ./secrets/postgres-user
-  postgres-password:
-    file: ./secrets/postgres-password
-  postgres-db:
-    file: ./secrets/postgres-db
-  credentials:
-    file: ./secrets/credentials
-  dhis2-admin-credentials:
-    file: ./secrets/dhis2-admin-credentials
