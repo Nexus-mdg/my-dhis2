@@ -54,10 +54,14 @@ swarm-init-secrets:
 
 swarm-deploy: swarm-init-secrets
 	docker compose -f $(SWARM_FILE) build
+	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
+	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
 swarm-redeploy:
 	docker compose -f $(SWARM_FILE) build
+	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
+	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
 swarm-remove:
@@ -66,10 +70,14 @@ swarm-remove:
 	docker secret rm postgres-user postgres-password postgres-db credentials || true
 
 swarm-update:
+	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
+	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
 swarm-rebuild:
 	docker compose -f $(SWARM_FILE) build
+	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
+	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
 # Volume Management

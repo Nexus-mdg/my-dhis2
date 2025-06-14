@@ -11,6 +11,7 @@ services:
       - "postgresql_data:/var/lib/postgresql/data"
     ports:
       - "5432:5432"
+    restart: on-failure
 
   adminer:
     container_name: adminer
@@ -19,6 +20,7 @@ services:
       - "8081:8080"
     depends_on:
       - db
+    restart: on-failure
 
   dhis2:
     container_name: dhis2
@@ -31,12 +33,12 @@ services:
     volumes:
       - "fileResource:/opt/dhis2/files"
       - "logs:/opt/dhis2/logs"
-      - "./credentials:/run/secrets/credentials"
     ports:
       # HTTP port removed to enforce HTTPS only
       - "9443:8443"
     depends_on:
       - db
+    restart: on-failure
 
   ingress:
     container_name: ingress
@@ -51,13 +53,14 @@ services:
       - "444:444"  # HTTPS for Adminer
       - "8000:8000" # HTTP file sharing (redirects to HTTPS)
       - "8443:8443" # HTTPS file sharing
-    restart: unless-stopped
+    restart: on-failure
 
   init:
     container_name: init
     image: python:3.9-slim
     volumes:
       - "./src:/app"
+      - "./src/secrets:/app/secrets"
     working_dir: /app
     command: >
       bash -c "apt-get update && apt-get install -y curl && 
@@ -83,3 +86,7 @@ volumes:
   fileResource:
   logs:
   postgresql_data:
+
+networks:
+  default:
+
