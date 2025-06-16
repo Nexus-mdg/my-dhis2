@@ -2,8 +2,8 @@ services:
 
   db:
     image: postgis/postgis:12-3.3
-#    volumes:
-#      - "postgresql_data:/var/lib/postgresql/data"
+    volumes:
+      - "postgresql_data:/var/lib/postgresql/data"
     environment:
       - POSTGRES_USER_FILE=/run/secrets/postgres-user
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-password
@@ -54,9 +54,9 @@ services:
     tty: true
     env_file:
       - ./.env.swarm
-#    volumes:
-#      - "fileResource:/opt/dhis2/files"
-#      - "logs:/opt/dhis2/logs"
+    volumes:
+      - "fileResource:/opt/dhis2/files"
+      - "logs:/opt/dhis2/logs"
     secrets:
       - credentials
     ports:
@@ -142,6 +142,39 @@ services:
           memory: 128M
       restart_policy:
         condition: none
+
+
+  notifications_rcvr:
+    image: python:3.9-slim
+    volumes:
+      - "./notifications:/app"
+    working_dir: /app
+    ports:
+      - "8080:8080"  # Add this line
+    command: >
+      bash -c "apt-get update && apt-get install -y curl && 
+      echo 'Waiting for DHIS2 to be ready...' && 
+      until curl -k -s https://dhis2:8443 > /dev/null; do 
+        echo 'DHIS2 not ready yet, waiting 10 seconds...' && 
+        sleep 10; 
+      done && 
+      echo 'DHIS2 is ready, running notification server...' && 
+      pip install -r requirements.txt && 
+      python server.py"
+    depends_on:
+      - dhis2
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+      restart_policy:
+        condition: on-failure  # Change from 'none'
+        max_attempts: 3
 
 volumes:
   fileResource:
