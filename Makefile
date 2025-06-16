@@ -5,9 +5,9 @@ SWARM_FILE = docker-compose.yaml
 STACK_NAME = dhis2
 
 # Docker Swarm Commands
-.PHONY: swarm-deploy swarm-redeploy swarm-remove swarm-update swarm-rebuild swarm-init-secrets
+.PHONY: deploy redeploy remove update rebuild init-secrets
 
-swarm-init-secrets:
+init-secrets:
 	@echo "Creating Docker Swarm secrets from files in ./secrets directory..."
 	@if [ -f ./secrets/postgres-user ]; then \
 		docker secret create postgres-user ./secrets/postgres-user; \
@@ -35,29 +35,29 @@ swarm-init-secrets:
 	fi
 	@echo "All secrets created successfully"
 
-swarm-deploy: swarm-init-secrets
+deploy: init-secrets
 	docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
 	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
-swarm-redeploy:
+redeploy:
 	docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
 	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
-swarm-remove:
+remove:
 	docker stack rm $(STACK_NAME)
 	@echo "Removing Docker Swarm secrets..."
 	docker secret rm postgres-user postgres-password postgres-db credentials || true
 
-swarm-update:
+update:
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
 	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
-swarm-rebuild:
+rebuild:
 	docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
 	@sleep 5
@@ -81,7 +81,7 @@ volume-prune:
 # Cleanup
 .PHONY: clean
 
-clean: swarm-remove
+clean: remove
 	@echo "Removing secret files in root directory..."
 	rm -f postgres-user postgres-password postgres-db credentials
 	@echo "Cleanup complete"
@@ -93,12 +93,12 @@ help:
 	@echo "DHIS2 Docker Environment Management"
 	@echo ""
 	@echo "Docker Swarm Commands:"
-	@echo "  make swarm-init-secrets - Create Docker Swarm secrets from files in ./secrets directory"
-	@echo "  make swarm-deploy      - Deploy the stack to Docker Swarm (includes creating secrets)"
-	@echo "  make swarm-redeploy    - Deploy the stack to Docker Swarm (without creating secrets)"
-	@echo "  make swarm-remove      - Remove the stack from Docker Swarm and remove secrets"
-	@echo "  make swarm-update      - Update the stack in Docker Swarm"
-	@echo "  make swarm-rebuild     - Rebuild images and update the stack"
+	@echo "  make init-secrets - Create Docker Swarm secrets from files in ./secrets directory"
+	@echo "  make deploy      - Deploy the stack to Docker Swarm (includes creating secrets)"
+	@echo "  make redeploy    - Deploy the stack to Docker Swarm (without creating secrets)"
+	@echo "  make remove      - Remove the stack from Docker Swarm and remove secrets"
+	@echo "  make update      - Update the stack in Docker Swarm"
+	@echo "  make rebuild     - Rebuild images and update the stack"
 	@echo ""
 	@echo "Volume Management:"
 	@echo "  make volume-list       - List all volumes used by the stack"
