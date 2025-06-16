@@ -78,6 +78,9 @@ volume-prune:
 		echo "Operation cancelled"; \
 	fi
 
+volume-destroy:
+	docker volume rm -f fileResource logs postgresql_data
+
 # Cleanup
 .PHONY: clean
 
