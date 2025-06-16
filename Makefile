@@ -1,25 +1,8 @@
 # Makefile for DHIS2 Docker Environment
 
 # Variables
-COMPOSE_FILE = docker-compose.yaml
 SWARM_FILE = docker-compose.swarm.yaml
 STACK_NAME = dhis2
-
-# Docker Compose Commands
-.PHONY: compose-up compose-down compose-restart compose-rebuild
-
-compose-up:
-	docker compose -f $(COMPOSE_FILE) up -d
-
-compose-down:
-	docker compose -f $(COMPOSE_FILE) down
-
-compose-restart:
-	docker compose -f $(COMPOSE_FILE) restart
-
-compose-rebuild:
-	docker compose -f $(COMPOSE_FILE) build
-	docker compose -f $(COMPOSE_FILE) up -d
 
 # Docker Swarm Commands
 .PHONY: swarm-deploy swarm-redeploy swarm-remove swarm-update swarm-rebuild swarm-init-secrets
@@ -108,12 +91,6 @@ clean: swarm-remove
 
 help:
 	@echo "DHIS2 Docker Environment Management"
-	@echo ""
-	@echo "Docker Compose Commands:"
-	@echo "  make compose-up        - Start all services using Docker Compose"
-	@echo "  make compose-down      - Stop all services"
-	@echo "  make compose-restart   - Restart all services"
-	@echo "  make compose-rebuild   - Rebuild and restart all services"
 	@echo ""
 	@echo "Docker Swarm Commands:"
 	@echo "  make swarm-init-secrets - Create Docker Swarm secrets from files in ./secrets directory"

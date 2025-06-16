@@ -29,7 +29,7 @@ Before deploying the stack, build the required images:
 
 ```bash
 # Build the images without starting containers
-docker-compose -f docker-compose.swarm.yaml build
+docker compose -f docker-compose.swarm.yaml build
 ```
 
 ### Deploying the Stack
@@ -93,13 +93,13 @@ To rebuild and update a specific service:
 1. Rebuild the image:
 
 ```bash
-docker-compose -f docker-compose.swarm.yaml build <service-name>
+docker compose -f docker-compose.swarm.yaml build <service-name>
 ```
 
 2. Push the image to a registry if using multiple nodes:
 
 ```bash
-docker-compose -f docker-compose.swarm.yaml push <service-name>
+docker compose -f docker-compose.swarm.yaml push <service-name>
 ```
 
 3. Force update the service:
