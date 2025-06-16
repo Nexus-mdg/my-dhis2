@@ -1,7 +1,7 @@
 # Makefile for DHIS2 Docker Environment
 
 # Variables
-SWARM_FILE = docker-compose.swarm.yaml
+SWARM_FILE = docker-compose.yaml
 STACK_NAME = dhis2
 
 # Docker Swarm Commands
