@@ -36,6 +36,7 @@ init-secrets:
 	@echo "All secrets created successfully"
 
 deploy: init-secrets
+	docker network rm dhis2_default || echo "Network deletion failed, skipping ..."
 	docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
 	@sleep 5

@@ -209,7 +209,7 @@ services:
     command: >
       bash -c "apt-get update && apt-get install -y curl && 
       pip install -r requirements.txt && 
-      DHIS2_TOKEN=$$(cat /run/secrets/dhis2-api-token) python event_poller.py"
+      python event_poller.py"
     depends_on:
       - redis
       - notifications_rcvr

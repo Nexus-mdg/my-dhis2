@@ -16,11 +16,19 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Configuration
 DHIS2_URL = os.getenv('DHIS2_URL', 'http://dhis2:8080')
-DHIS2_TOKEN = os.getenv('DHIS2_TOKEN')
 NOTIFICATION_URL = os.getenv('NOTIFICATION_URL', 'http://notifications_rcvr:8080')
 POLL_INTERVAL = int(os.getenv('POLL_INTERVAL', '10'))
 REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
 REDIS_KEY = 'dhis2:last_event_timestamp'
+
+# Read token from secret file
+DHIS2_TOKEN = None
+try:
+    with open('/run/secrets/dhis2-api-token', 'r') as f:
+        DHIS2_TOKEN = f.read().strip()
+    print(f"🔑 Token loaded: {len(DHIS2_TOKEN)} chars")
+except Exception as e:
+    print(f"❌ Error reading token file: {e}")
 
 # Redis connection
 r = redis.Redis(host=REDIS_HOST, port=6379, decode_responses=True)
@@ -53,12 +61,18 @@ def poll_events():
     }
 
     try:
+        print(f"🔍 Polling since: {last_timestamp}")
         response = requests.get(f'{DHIS2_URL}/api/events',
-                                headers=headers, params=params, verify=False)
+                                headers=headers, params=params, verify=False, timeout=30)
+        print(f"📡 Response status: {response.status_code}")
         response.raise_for_status()
         return response.json().get('events', [])
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ HTTP Error: {e}")
+        print(f"Response: {e.response.text if e.response else 'No response'}")
+        return []
     except Exception as e:
-        print(f"Error polling events: {e}")
+        print(f"❌ Error polling events: {e}")
         return []
 
 
@@ -76,7 +90,7 @@ def send_notification(event):
         response.raise_for_status()
         return True
     except Exception as e:
-        print(f"Error sending notification: {e}")
+        print(f"❌ Error sending notification: {e}")
         return False
 
 
@@ -85,9 +99,10 @@ def process_events():
     events = poll_events()
 
     if not events:
+        print("📭 No new events")
         return
 
-    print(f"Found {len(events)} new events")
+    print(f"📋 Found {len(events)} new events")
     latest_timestamp = None
 
     for event in events:
@@ -115,6 +130,9 @@ def main():
         return
 
     print(f"🚀 Starting poller (interval: {POLL_INTERVAL}s)")
+    print(f"📍 DHIS2 URL: {DHIS2_URL}")
+    print(f"📨 Notification URL: {NOTIFICATION_URL}")
+    print(f"🔄 Redis host: {REDIS_HOST}")
 
     while True:
         try:
