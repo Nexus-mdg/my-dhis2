@@ -200,7 +200,7 @@ services:
       - "./poller:/app"
     working_dir: /app
     environment:
-      - DHIS2_URL=http://dhis2:8080
+      - DHIS2_URL=http://dhis2_dhis2:8080
       - NOTIFICATION_URL=http://dhis2_notifications_rcvr:8080
       - POLL_INTERVAL=10
       - REDIS_HOST=redis

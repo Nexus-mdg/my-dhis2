@@ -15,7 +15,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Configuration
-DHIS2_URL = os.getenv('DHIS2_URL', 'http://dhis2:8080')
+DHIS2_URL = os.getenv('DHIS2_URL', 'http://dhis2_dhis2:8080')
 DHIS2_TOKEN = os.getenv('DHIS2_TOKEN')
 NOTIFICATION_URL = os.getenv('NOTIFICATION_URL', 'http://dhis2_notifications_rcvr:8080')
 POLL_INTERVAL = int(os.getenv('POLL_INTERVAL', '10'))
