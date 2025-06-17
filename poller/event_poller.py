@@ -53,20 +53,31 @@ def poll_events():
     last_timestamp = get_last_timestamp()
 
     headers = {'Authorization': f'ApiToken {DHIS2_TOKEN}'}
+
+    # DHIS2 API uses lastUpdated without '>' operator
     params = {
         'status': 'COMPLETED',
-        'lastUpdated': f'>{last_timestamp}',
+        'lastUpdated': last_timestamp,  # Remove the '>' prefix
         'fields': 'event,program,programStage,trackedEntityInstance,eventDate,orgUnit,completedDate',
         'pageSize': 50
     }
 
     try:
         print(f"🔍 Polling since: {last_timestamp}")
+        print(f"🔗 URL: {DHIS2_URL}/api/events")
         response = requests.get(f'{DHIS2_URL}/api/events',
                                 headers=headers, params=params, verify=False, timeout=30)
         print(f"📡 Response status: {response.status_code}")
-        response.raise_for_status()
-        return response.json().get('events', [])
+
+        if response.status_code != 200:
+            print(f"❌ Response body: {response.text}")
+            return []
+
+        data = response.json()
+        events = data.get('events', [])
+        print(f"📋 Found {len(events)} events since {last_timestamp}")
+        return events
+
     except requests.exceptions.HTTPError as e:
         print(f"❌ HTTP Error: {e}")
         print(f"Response: {e.response.text if e.response else 'No response'}")
