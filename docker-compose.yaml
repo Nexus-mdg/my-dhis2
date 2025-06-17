@@ -208,7 +208,7 @@ services:
       - dhis2-api-token
     command: >
       bash -c "pip install -r requirements.txt && 
-      export DHIS2_TOKEN=$(cat /run/secrets/dhis2-api-token) && 
+      export DHIS2_TOKEN=$$(cat /run/secrets/dhis2-api-token) && 
       python event_poller.py"
     depends_on:
       - redis
@@ -249,3 +249,5 @@ secrets:
     file: ./secrets/credentials
   dhis2-admin-credentials:
     file: ./secrets/dhis2-admin-credentials
+  dhis2-api-token:
+    file: ./secrets/dhis2-api-token
