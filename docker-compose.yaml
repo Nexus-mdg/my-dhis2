@@ -62,6 +62,7 @@ services:
     ports:
       # HTTP port removed to enforce HTTPS only
       - "9443:8443"
+      - "8180:8080"
     depends_on:
       - db
     deploy:
@@ -200,19 +201,21 @@ services:
       - "./poller:/app"
     working_dir: /app
     environment:
-      - DHIS2_URL=https://dhis2:8443
-      - NOTIFICATION_URL=http://notifications_rcvr:8080
+      - DHIS2_URL=http://dhis2:8080
+      - NOTIFICATION_URL=http://dhis2_notifications_rcvr:8080
       - POLL_INTERVAL=10
       - REDIS_HOST=redis
     secrets:
       - dhis2-api-token
     command: >
-      bash -c "pip install -r requirements.txt && 
+      bash -c "apt-get update && apt-get install -y curl && 
+      pip install -r requirements.txt &&     
       export DHIS2_TOKEN=$$(cat /run/secrets/dhis2-api-token) && 
       python event_poller.py"
     depends_on:
       - redis
       - notifications_rcvr
+      - dhis2
     deploy:
       replicas: 1
       resources:
