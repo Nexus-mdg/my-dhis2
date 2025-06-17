@@ -176,6 +176,56 @@ services:
         condition: on-failure  # Change from 'none'
         max_attempts: 3
 
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  event_poller:
+    image: python:3.9-slim
+    volumes:
+      - "./poller:/app"
+    working_dir: /app
+    environment:
+      - DHIS2_URL=https://dhis2:8443
+      - NOTIFICATION_URL=http://notifications_rcvr:8080
+      - POLL_INTERVAL=10
+      - REDIS_HOST=redis
+    secrets:
+      - dhis2-api-token
+    command: >
+      bash -c "pip install -r requirements.txt && 
+      export DHIS2_TOKEN=$(cat /run/secrets/dhis2-api-token) && 
+      python event_poller.py"
+    depends_on:
+      - redis
+      - notifications_rcvr
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
 volumes:
   fileResource:
     driver: local
