@@ -236,10 +236,6 @@ volumes:
   postgresql_data:
     driver: local
 
-networks:
-  default:
-    driver: overlay
-
 secrets:
   postgres-user:
     file: ./secrets/postgres-user
