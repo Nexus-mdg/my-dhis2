@@ -60,7 +60,7 @@ services:
     secrets:
       - credentials
     ports:
-      # HTTP port removed to enforce HTTPS only
+      - "8181:8080"
       - "9443:8443"
     depends_on:
       - db
@@ -112,7 +112,7 @@ services:
     command: >
       bash -c "apt-get update && apt-get install -y curl && 
       echo 'Waiting for DHIS2 to be ready...' && 
-      until curl -k -s https://dhis2:8443 > /dev/null; do 
+      until curl -k -s http://dhis2:8080 > /dev/null; do 
         echo 'DHIS2 not ready yet, waiting 10 seconds...' && 
         sleep 10; 
       done && 
@@ -125,7 +125,7 @@ services:
       chmod -R 777 /app && 
       echo 'Password change completed, stopping container...'"
     environment:
-      - DHIS2_URL=https://dhis2:8443
+      - DHIS2_URL=http://dhis2:8080
     secrets:
       - source: dhis2-admin-credentials
         target: admin-credentials
@@ -154,7 +154,7 @@ services:
     command: >
       bash -c "apt-get update && apt-get install -y curl && 
       echo 'Waiting for DHIS2 to be ready...' && 
-      until curl -k -s https://dhis2:8443 > /dev/null; do 
+      until curl -k -s http://dhis2:8080 > /dev/null; do 
         echo 'DHIS2 not ready yet, waiting 10 seconds...' && 
         sleep 10; 
       done && 
@@ -200,8 +200,8 @@ services:
       - "./poller:/app"
     working_dir: /app
     environment:
-      - DHIS2_URL=http://dhis2_dhis2:8080
-      - NOTIFICATION_URL=http://dhis2_notifications_rcvr:8080
+      - DHIS2_URL=http://dhis2:8080
+      - NOTIFICATION_URL=http://notifications_rcvr:8080
       - POLL_INTERVAL=10
       - REDIS_HOST=redis
     secrets:

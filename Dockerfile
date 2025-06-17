@@ -65,12 +65,13 @@ RUN CATALINA_HOME_BUILD=$(find /opt/tomcat -name "catalina.sh" | head -1 | sed '
 
 # Copy configuration and scripts
 COPY tomcatconf-https/ /tmp/tomcat-conf-https/
-# HTTP configuration removed to enforce HTTPS only
+COPY tomcatconf-http/ /tmp/tomcat-conf-http/
+
 ADD entrypoint.sh /tmp/entrypoint.sh
 RUN chmod 755 /tmp/entrypoint.sh
 
 # Only expose HTTPS port
-EXPOSE 8443
+EXPOSE 8080 8443
 
 WORKDIR /pkg
 ENTRYPOINT ["/tmp/entrypoint.sh"]
