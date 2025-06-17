@@ -62,7 +62,6 @@ services:
     ports:
       # HTTP port removed to enforce HTTPS only
       - "9443:8443"
-      - "8180:8080"
     depends_on:
       - db
     deploy:
