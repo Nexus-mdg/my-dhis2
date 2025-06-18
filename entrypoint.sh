@@ -114,7 +114,7 @@ openssl req -x509 -newkey rsa:4096 \
   -keyout /opt/tomcat/localhost-rsa-key.pem \
   -out /opt/tomcat/localhost-rsa-cert.pem \
   -days 36500 -passout pass:"$RND" \
-  -subj "${CERT_SUBJECT:-/C=MG/ST=Antananarivo/L=Antananarivo/O=Global Security/OU=IT Department/CN=localhost}"
+  -subj "${CERT_SUBJECT:-/C=MG/ST=World/L=World/O=VHT/OU=DEV/CN=dhis2_dhis2}"
 
 # Copy HTTPS configuration
 cp -f /tmp/tomcat-conf-https/* "$CATALINA_HOME"/conf/
