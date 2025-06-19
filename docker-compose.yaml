@@ -104,26 +104,12 @@ services:
         max_attempts: 3
 
   init:
-    image: python:3.9-slim
+    image: dhis2-init
+    build:
+      context: ./init
+      dockerfile: Dockerfile
     volumes:
-      - "./src:/app"
       - "./src/secrets:/app/secrets"
-    working_dir: /app
-    command: >
-      bash -c "apt-get update && apt-get install -y curl && 
-      echo 'Waiting for DHIS2 to be ready...' && 
-      until curl -k -s https://dhis2:8443 > /dev/null; do 
-        echo 'DHIS2 not ready yet, waiting 10 seconds...' && 
-        sleep 10; 
-      done && 
-      echo 'DHIS2 is ready, proceeding with password change...' && 
-      pip install -r requirements.txt && 
-      export DHIS2_USERNAME=$$(head -n 1 /run/secrets/admin-credentials) && 
-      export DHIS2_PASSWORD=$$(head -n 2 /run/secrets/admin-credentials | tail -n 1) && 
-      echo 'Using credentials from secret file' && 
-      python app.py && 
-      chmod -R 777 /app && 
-      echo 'Password change completed, stopping container...'"
     environment:
       - DHIS2_URL=https://dhis2:8443
     secrets:
