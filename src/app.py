@@ -11,6 +11,7 @@ import urllib3
 import os
 from datetime import datetime
 from requests.auth import HTTPBasicAuth
+import base64
 
 # Disable SSL warnings for self-signed certificates
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -344,28 +345,49 @@ def write_credentials_file(result, dhis2_url):
         return None
 
 
-def main():
-    # Get DHIS2 URL from environment variable
-    DHIS2_URL = os.getenv('DHIS2_URL')
-
-    if not DHIS2_URL:
-        print("[DHIS2] ❌ DHIS2_URL environment variable is required")
-        return
-
-    print(f"[DHIS2] Using DHIS2 URL from environment: {DHIS2_URL}")
-
-    # Get credentials from environment
+def get_dhis2_auth():
+    """
+    Returns (session, username) for DHIS2 API access.
+    Prefers Bearer token from /run/secrets/dhis2-token if present and non-empty.
+    Otherwise, uses username/password from env or secrets.
+    """
+    session = requests.Session()
+    session.verify = False
+    token_path = '/run/secrets/dhis2-token'
+    token = None
+    if os.path.exists(token_path):
+        with open(token_path, 'r') as f:
+            token = f.read().strip()
+    if token:
+        session.headers.update({'Authorization': f'Bearer {token}'})
+        return session, None  # Username not needed for Bearer
+    # Fallback to username/password
     username = os.getenv('DHIS2_USERNAME')
     password = os.getenv('DHIS2_PASSWORD')
-
+    # Try to read from secrets if not set
     if not username or not password:
-        print("[DHIS2] ❌ DHIS2_USERNAME and DHIS2_PASSWORD environment variables are required")
-        return
+        cred_path = '/run/secrets/admin-credentials'
+        if os.path.exists(cred_path):
+            with open(cred_path, 'r') as f:
+                lines = f.read().splitlines()
+                if len(lines) >= 2:
+                    username = lines[0].strip()
+                    password = lines[1].strip()
+    if not username or not password:
+        raise Exception('DHIS2 credentials not found in environment or secrets')
+    session.auth = HTTPBasicAuth(username, password)
+    return session, username
 
-    print(f"[DHIS2] Using credentials: {username} / {'*' * len(password)}")
 
-    # Create root user creator and execute
-    creator = DHIS2RootUserCreator(DHIS2_URL, username, password)
+def main():
+    DHIS2_URL = os.getenv('DHIS2_URL')
+    if not DHIS2_URL:
+        print("[DHIS2] ❌ DHIS2_URL environment variable is required")
+        exit(1)
+    session, username = get_dhis2_auth()
+    # Pass session and username to DHIS2RootUserCreator
+    creator = DHIS2RootUserCreator(DHIS2_URL, username, None)
+    creator.session = session  # Use the session with correct auth
     result = creator.setup_root_user()
 
     if result['success']:
