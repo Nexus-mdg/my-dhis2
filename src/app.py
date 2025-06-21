@@ -405,7 +405,7 @@ def main():
         print("[DHIS2] ❌ Could not connect to DHIS2 after multiple attempts")
         sys.exit(1)
 
-    # Set default credentials
+    # First try with the default credentials
     username = os.getenv('DHIS2_USERNAME', 'admin')
     password = os.getenv('DHIS2_PASSWORD', 'district')
 
@@ -413,6 +413,75 @@ def main():
 
     # Create root user creator and execute
     creator = DHIS2RootUserCreator(DHIS2_URL, username, password)
+
+    # Try to test the connection first
+    try:
+        print("[DHIS2] Testing initial connection with admin credentials...")
+        test_response = creator.session.get(f"{DHIS2_URL}/api/me")
+        test_response.raise_for_status()
+        print(f"[DHIS2] Admin credentials working: {test_response.json().get('name', 'Unknown')}")
+        # If we get here, admin credentials work
+    except requests.exceptions.HTTPError as e:
+        if e.response and e.response.status_code == 401:
+            # Admin credentials failed - try root user
+            print("[DHIS2] Admin credentials failed (401) - admin likely disabled")
+            print("[DHIS2] Attempting to authenticate with root user...")
+
+            # To find the root password, let's read previous credential files
+            root_password = None
+            secrets_dir = "/app/secrets/"
+            try:
+                # List credentials files and sort by timestamp (newest first)
+                if os.path.exists(secrets_dir):
+                    credentials_files = sorted([f for f in os.listdir(secrets_dir) if f.startswith('dhis2_credentials_')],
+                                              reverse=True)
+
+                    for cred_file in credentials_files:
+                        try:
+                            print(f"[DHIS2] Checking credentials file: {cred_file}")
+                            with open(os.path.join(secrets_dir, cred_file), 'r') as f:
+                                content = f.read()
+                                # Look for password in the credential file
+                                for line in content.split('\n'):
+                                    if line.startswith("Password:"):
+                                        root_password = line.replace("Password:", "").strip()
+                                        print(f"[DHIS2] Found root password in {cred_file}")
+                                        break
+                            if root_password:
+                                break
+                        except Exception as file_err:
+                            print(f"[DHIS2] Error reading credential file {cred_file}: {file_err}")
+            except Exception as dir_err:
+                print(f"[DHIS2] Error accessing credentials directory: {dir_err}")
+
+            if not root_password:
+                print("[DHIS2] Could not find root password in credential files")
+                print("[DHIS2] Trying alternate approaches...")
+
+                # If no password found in files, we could try common patterns or pull from env
+                # For security, we should require it to be set in environment if not found
+                root_password = os.getenv('DHIS2_ROOT_PASSWORD')
+
+            if root_password:
+                print("[DHIS2] Trying with root user...")
+                creator = DHIS2RootUserCreator(DHIS2_URL, "root", root_password)
+                try:
+                    test_response = creator.session.get(f"{DHIS2_URL}/api/me")
+                    test_response.raise_for_status()
+                    print(f"[DHIS2] Root credentials working: {test_response.json().get('name', 'Unknown')}")
+                except Exception as root_err:
+                    print(f"[DHIS2] Root authentication failed: {root_err}")
+                    print("[DHIS2] Cannot proceed without valid credentials")
+                    sys.exit(1)
+            else:
+                print("[DHIS2] No root password available, cannot proceed")
+                sys.exit(1)
+        else:
+            # Some other error
+            print(f"[DHIS2] Connection error: {e}")
+            sys.exit(1)
+
+    # Now proceed with setup using working credentials
     result = creator.setup_root_user()
 
     if result['success']:
