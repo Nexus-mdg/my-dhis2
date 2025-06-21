@@ -1,19 +1,57 @@
 #!/usr/bin/env python3
 """
 DHIS2 Root User Creator
-Creates a new 'root' user with UUID-based password
+Creates a new 'root' user with UUID-based password if it doesn't exist already
 """
 
 import requests
 import uuid
-import json
 import urllib3
 import os
+import time
+import sys
 from datetime import datetime
 from requests.auth import HTTPBasicAuth
 
 # Disable SSL warnings for self-signed certificates
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+def wait_for_dhis2(url, max_retries=30, retry_delay=10):
+    """
+    Wait for DHIS2 to become available by trying to connect to it.
+    Returns True when connection succeeds, False after max retries.
+    """
+    print(f"[DHIS2] Waiting for DHIS2 at {url} to become available...")
+
+    session = requests.Session()
+    session.verify = False  # Ignore SSL errors
+
+    for retry in range(1, max_retries + 1):
+        try:
+            # Try a simple HEAD request to check if the server is responding
+            response = session.head(url, timeout=5)
+            if response.status_code < 500:
+                print(f"[DHIS2] ✅ DHIS2 is responding after {retry} tries")
+
+                # Try a more specific API call to ensure DHIS2 is fully up
+                try:
+                    api_response = session.get(f"{url}/api/system/info", timeout=5)
+                    api_response.raise_for_status()
+                    print(f"[DHIS2] ✅ DHIS2 API is available!")
+                    return True
+                except Exception:
+                    print("[DHIS2] DHIS2 responded but API not yet available, waiting...")
+            else:
+                print(f"[DHIS2] Server responded with status {response.status_code}, waiting...")
+
+        except requests.exceptions.RequestException:
+            print(f"[DHIS2] Attempt {retry}/{max_retries}: DHIS2 not ready yet, waiting {retry_delay} seconds...")
+
+        # Wait before next attempt
+        time.sleep(retry_delay)
+
+    print(f"[DHIS2] ❌ DHIS2 did not become available after {max_retries} retries")
+    return False
 
 
 class DHIS2RootUserCreator:
@@ -223,20 +261,6 @@ class DHIS2RootUserCreator:
                 pass
             print(f"[DHIS2] ⚠️  Failed to disable admin user: {e}{error_detail}")
             return False
-        """Verify the new root credentials work"""
-        try:
-            test_session = requests.Session()
-            test_session.verify = False
-            test_session.auth = HTTPBasicAuth("root", new_password)
-
-            url = f"{self.base_url}/api/me"
-            response = test_session.get(url)
-            response.raise_for_status()
-
-            return True
-
-        except requests.exceptions.RequestException:
-            return False
 
     def setup_root_user(self):
         """Main method to create/update root user"""
@@ -254,30 +278,43 @@ class DHIS2RootUserCreator:
             print("[DHIS2] Checking if root user already exists...")
             existing_root = self.check_root_user_exists()
 
-            # Generate new password
+            if existing_root:
+                print(f"[DHIS2] Root user already exists with ID: {existing_root['id']}")
+                print("[DHIS2] ✅ No action needed - using existing root user")
+                # Return success with existing user info, but don't change anything
+                return {
+                    'success': True,
+                    'username': 'root',
+                    'user_id': existing_root['id'],
+                    'action': 'exists',
+                    'admin_disabled': False  # Don't report admin as disabled since we didn't check
+                }
+
+            # Generate new password for new root user
             full_uuid, new_password = self.generate_new_password()
             print("[DHIS2] Generated UUID:", full_uuid)
             print("[DHIS2] New password for root user:", new_password)
 
-            if existing_root:
-                print(f"[DHIS2] Root user already exists with ID: {existing_root['id']}")
-                print("[DHIS2] Updating existing root user password...")
-                self.update_root_password(existing_root['id'], new_password)
-                user_id = existing_root['id']
-                action = 'updated'
-            else:
-                print("[DHIS2] Root user doesn't exist, creating new root user...")
-                user_id = self.create_root_user(new_password)
-                action = 'created'
+            # Create new root user
+            print("[DHIS2] Root user doesn't exist, creating new root user...")
+            user_id = self.create_root_user(new_password)
+            action = 'created'
 
             # Verify new credentials
             print("[DHIS2] Verifying new root credentials...")
             if self.verify_root_credentials(new_password):
                 print("[DHIS2] ✅ Root user setup completed successfully!")
 
+                # We're keeping admin user enabled by default
+                print("[DHIS2] Admin user will remain enabled for convenience")
+                admin_disabled = False
+
+                # Code to disable admin user is preserved but commented out
+                """
                 # Now disable the original admin user for security
                 print("[DHIS2] Disabling original admin user for security...")
                 admin_disabled = self.disable_admin_user()
+                """
 
                 return {
                     'success': True,
@@ -303,6 +340,22 @@ def write_credentials_file(result, dhis2_url):
     filename = f"/app/secrets/dhis2_credentials_{timestamp}.txt"
 
     try:
+        # Handle case where we're using an existing root user (no new password)
+        if result.get('action') == 'exists':
+            with open(filename, 'w') as f:
+                f.write("=" * 80 + "\n")
+                f.write("🎉 EXISTING DHIS2 ROOT USER FOUND\n")
+                f.write("=" * 80 + "\n\n")
+                f.write("ℹ️ Root user already exists - no new credentials created\n")
+                f.write(f"User ID: {result.get('user_id')}\n\n")
+                f.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"DHIS2 URL: {dhis2_url}\n")
+                f.write(f"Action: No action - existing root user\n")
+                f.write("Note: Admin user was not disabled\n")
+            os.chmod(filename, 0o600)
+            return filename
+
+        # Normal case - new or updated root user
         with open(filename, 'w') as f:
             f.write("=" * 80 + "\n")
             f.write(f"🎉 DHIS2 ROOT USER {result.get('action', 'CREATED').upper()} SUCCESSFULLY\n")
@@ -350,22 +403,92 @@ def main():
 
     if not DHIS2_URL:
         print("[DHIS2] ❌ DHIS2_URL environment variable is required")
-        return
+        exit(1)
 
     print(f"[DHIS2] Using DHIS2 URL from environment: {DHIS2_URL}")
 
-    # Get credentials from environment
-    username = os.getenv('DHIS2_USERNAME')
-    password = os.getenv('DHIS2_PASSWORD')
+    # Wait for DHIS2 to become available before proceeding
+    if not wait_for_dhis2(DHIS2_URL):
+        print("[DHIS2] ❌ Could not connect to DHIS2 after multiple attempts")
+        sys.exit(1)
 
-    if not username or not password:
-        print("[DHIS2] ❌ DHIS2_USERNAME and DHIS2_PASSWORD environment variables are required")
-        return
+    # First try with the default credentials
+    username = os.getenv('DHIS2_USERNAME', 'admin')
+    password = os.getenv('DHIS2_PASSWORD', 'district')
 
     print(f"[DHIS2] Using credentials: {username} / {'*' * len(password)}")
 
     # Create root user creator and execute
     creator = DHIS2RootUserCreator(DHIS2_URL, username, password)
+
+    # Try to test the connection first
+    try:
+        print("[DHIS2] Testing initial connection with admin credentials...")
+        test_response = creator.session.get(f"{DHIS2_URL}/api/me")
+        test_response.raise_for_status()
+        print(f"[DHIS2] Admin credentials working: {test_response.json().get('name', 'Unknown')}")
+        # If we get here, admin credentials work
+    except requests.exceptions.HTTPError as e:
+        if e.response and e.response.status_code == 401:
+            # Admin credentials failed - try root user
+            print("[DHIS2] Admin credentials failed (401) - admin likely disabled")
+            print("[DHIS2] Attempting to authenticate with root user...")
+
+            # To find the root password, let's read previous credential files
+            root_password = None
+            secrets_dir = "/app/secrets/"
+            try:
+                # List credentials files and sort by timestamp (newest first)
+                if os.path.exists(secrets_dir):
+                    credentials_files = sorted([f for f in os.listdir(secrets_dir) if f.startswith('dhis2_credentials_')],
+                                              reverse=True)
+
+                    for cred_file in credentials_files:
+                        try:
+                            print(f"[DHIS2] Checking credentials file: {cred_file}")
+                            with open(os.path.join(secrets_dir, cred_file), 'r') as f:
+                                content = f.read()
+                                # Look for password in the credential file
+                                for line in content.split('\n'):
+                                    if line.startswith("Password:"):
+                                        root_password = line.replace("Password:", "").strip()
+                                        print(f"[DHIS2] Found root password in {cred_file}")
+                                        break
+                            if root_password:
+                                break
+                        except Exception as file_err:
+                            print(f"[DHIS2] Error reading credential file {cred_file}: {file_err}")
+            except Exception as dir_err:
+                print(f"[DHIS2] Error accessing credentials directory: {dir_err}")
+
+            if not root_password:
+                print("[DHIS2] Could not find root password in credential files")
+                print("[DHIS2] Trying alternate approaches...")
+
+                # If no password found in files, we could try common patterns or pull from env
+                # For security, we should require it to be set in environment if not found
+                root_password = os.getenv('DHIS2_ROOT_PASSWORD')
+
+            if root_password:
+                print("[DHIS2] Trying with root user...")
+                creator = DHIS2RootUserCreator(DHIS2_URL, "root", root_password)
+                try:
+                    test_response = creator.session.get(f"{DHIS2_URL}/api/me")
+                    test_response.raise_for_status()
+                    print(f"[DHIS2] Root credentials working: {test_response.json().get('name', 'Unknown')}")
+                except Exception as root_err:
+                    print(f"[DHIS2] Root authentication failed: {root_err}")
+                    print("[DHIS2] Cannot proceed without valid credentials")
+                    sys.exit(1)
+            else:
+                print("[DHIS2] No root password available, cannot proceed")
+                sys.exit(1)
+        else:
+            # Some other error
+            print(f"[DHIS2] Connection error: {e}")
+            sys.exit(1)
+
+    # Now proceed with setup using working credentials
     result = creator.setup_root_user()
 
     if result['success']:
@@ -375,39 +498,53 @@ def main():
         if credentials_file:
             print()
             print("=" * 80)
-            print(f"🎉 DHIS2 ROOT USER {result['action'].upper()} SUCCESSFULLY")
+
+            if result.get('action') == 'exists':
+                print("🎉 EXISTING DHIS2 ROOT USER FOUND - NO ACTION NEEDED")
+            else:
+                print(f"🎉 DHIS2 ROOT USER {result['action'].upper()} SUCCESSFULLY")
+
             print("=" * 80)
             print()
             print("📁 CREDENTIALS SAVED TO FILE:")
             print(f"   {credentials_file}")
             print()
-            print("📋 QUICK ACCESS:")
-            print(f"   cat {credentials_file}")
-            print()
-            print("🔑 LOGIN DETAILS:")
-            print(f"   Username: {result['username']}")
-            print(f"   Password: {result['new_password']}")
-            print(f"   URL: {DHIS2_URL}/dhis-web-commons/security/login.action")
-            print()
-            if result.get('admin_disabled'):
-                print("🔒 SECURITY: Original admin user has been disabled")
+
+            if result.get('action') != 'exists':
+                print("📋 QUICK ACCESS:")
+                print(f"   cat {credentials_file}")
+                print()
+                print("🔑 LOGIN DETAILS:")
+                print(f"   Username: {result['username']}")
+                print(f"   Password: {result['new_password']}")
+                print(f"   URL: {DHIS2_URL}/dhis-web-commons/security/login.action")
+                print()
+
+                if result.get('admin_disabled'):
+                    print("🔒 SECURITY: Original admin user has been disabled")
+                else:
+                    print("⚠️  SECURITY: Original admin user was NOT disabled")
             else:
-                print("⚠️  SECURITY: Original admin user could not be disabled")
+                print("ℹ️  Using existing root user - no changes made")
+
             print()
             print("=" * 80)
         else:
             # Fallback to console output if file writing fails
             print()
             print("=" * 80)
-            print(f"🎉 DHIS2 ROOT USER {result['action'].upper()} SUCCESSFULLY")
-            print("=" * 80)
-            print(f"Username: {result['username']}")
-            print(f"Password: {result['new_password']}")
-            print(f"URL: {DHIS2_URL}/dhis-web-commons/security/login.action")
-            if result.get('admin_disabled'):
-                print("🔒 Original admin user disabled")
+            if result.get('action') == 'exists':
+                print("🎉 EXISTING DHIS2 ROOT USER FOUND - NO ACTION NEEDED")
             else:
-                print("⚠️  Original admin user NOT disabled")
+                print(f"🎉 DHIS2 ROOT USER {result['action'].upper()} SUCCESSFULLY")
+                print(f"Username: {result['username']}")
+                print(f"Password: {result['new_password']}")
+                print(f"URL: {DHIS2_URL}/dhis-web-commons/security/login.action")
+
+                if result.get('admin_disabled'):
+                    print("🔒 Original admin user disabled")
+                else:
+                    print("⚠️  Original admin user NOT disabled")
             print("=" * 80)
 
     else:
