@@ -41,7 +41,8 @@ deploy: init-secrets
 	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
-redeploy:
+redeploy: remove
+	@echo "Redeploying stack without creating secrets..."
 	docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
 	@sleep 5

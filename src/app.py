@@ -305,9 +305,16 @@ class DHIS2RootUserCreator:
             if self.verify_root_credentials(new_password):
                 print("[DHIS2] ✅ Root user setup completed successfully!")
 
+                # We're keeping admin user enabled by default
+                print("[DHIS2] Admin user will remain enabled for convenience")
+                admin_disabled = False
+
+                # Code to disable admin user is preserved but commented out
+                """
                 # Now disable the original admin user for security
                 print("[DHIS2] Disabling original admin user for security...")
                 admin_disabled = self.disable_admin_user()
+                """
 
                 return {
                     'success': True,
