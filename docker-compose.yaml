@@ -105,37 +105,6 @@ services:
     depends_on:
       - adminer
 
-  init:
-    build:
-      context: ./src
-      dockerfile: Dockerfile
-    image: dhis2-init
-    volumes:
-      - "./src:/app"
-      - "./src/secrets:/app/secrets"
-    environment:
-      - DHIS2_URL=https://dhis2:8443
-      - DHIS2_USERNAME_FILE=/run/secrets/admin-credentials
-      - DHIS2_PASSWORD_FILE=/run/secrets/admin-credentials
-    secrets:
-      - source: dhis2-admin-credentials
-        target: admin-credentials
-      - source: dhis2-token
-        target: dhis2-token
-    depends_on:
-      - dhis2
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: '0.3'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-      restart_policy:
-        condition: none
-
 
   sms_gateway:
     image: python:3.9-slim
@@ -188,7 +157,3 @@ secrets:
     file: ./secrets/postgres-db
   credentials:
     file: ./secrets/credentials
-  dhis2-admin-credentials:
-    file: ./secrets/dhis2-admin-credentials
-  dhis2-token:
-    file: ./secrets/dhis2-token
