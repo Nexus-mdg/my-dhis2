@@ -46,7 +46,9 @@ redeploy: remove
 	docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
 	@sleep 5
-	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
+	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME) || echo "Redeployment failed. Ensure the stack is removed first."
+	@sleep 5
+	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME) || echo "Redeployment failed. Ensure the stack is removed first."
 
 remove:
 	docker stack rm $(STACK_NAME)

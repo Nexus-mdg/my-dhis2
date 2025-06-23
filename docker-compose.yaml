@@ -102,6 +102,8 @@ services:
       restart_policy:
         condition: on-failure
         max_attempts: 3
+    depends_on:
+      - adminer
 
   init:
     build:
@@ -135,23 +137,21 @@ services:
         condition: none
 
 
-  notifications_rcvr:
+  sms_gateway:
     image: python:3.9-slim
     volumes:
-      - "./notifications:/app"
+      - "./sms_gateway:/app"
     working_dir: /app
     ports:
-      - "8080:8080"  # Add this line
+      - "8082:8082"
     command: >
       bash -c "apt-get update && apt-get install -y curl && 
-      echo 'Waiting for DHIS2 to be ready...' && 
-      until curl -k -s https://dhis2:8443 > /dev/null; do 
-        echo 'DHIS2 not ready yet, waiting 10 seconds...' && 
-        sleep 10; 
-      done && 
-      echo 'DHIS2 is ready, running notification server...' && 
+      echo 'Setting up DHIS2 SMS Gateway...' && 
+      chmod +x /app/setup_sms_gateway.sh && 
+      /app/setup_sms_gateway.sh && 
+      echo 'Starting SMS Gateway Service...' && 
       pip install -r requirements.txt && 
-      python server.py"
+      python sms_gateway.py"
     depends_on:
       - dhis2
     deploy:
@@ -164,7 +164,7 @@ services:
           cpus: '0.1'
           memory: 128M
       restart_policy:
-        condition: on-failure  # Change from 'none'
+        condition: on-failure
         max_attempts: 3
 
 volumes:
