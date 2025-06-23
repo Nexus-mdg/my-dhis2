@@ -4,7 +4,7 @@
 set -e
 
 # Get DHIS2 URL from environment or use default
-DHIS2_URL="${DHIS2_URL:-https://dhis2.stack}"
+DHIS2_URL="${DHIS2_URL:-https://dhis2:8443}"
 DHIS2_USERNAME="${DHIS2_USERNAME:-admin}"
 DHIS2_PASSWORD="${DHIS2_PASSWORD:-district}"
 

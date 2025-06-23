@@ -41,7 +41,7 @@ deploy: init-secrets
 	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
-redeploy: remove
+redeploy: remove volume-destroy
 	@echo "Redeploying stack without creating secrets..."
 	docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
@@ -82,7 +82,7 @@ volume-prune:
 	fi
 
 volume-destroy:
-	docker volume rm -f fileResource logs postgresql_data
+	docker volume rm -f dhis2_fileResource dhis2_logs dhis2_postgresql_data
 
 # Cleanup
 .PHONY: clean

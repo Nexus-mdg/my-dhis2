@@ -1,5 +1,24 @@
 [
   {
+    "timestamp": "2025-06-23T11:54:10.295310",
+    "data": {
+      "raw_data": {
+        "text": "TEST MESSAGE",
+        "sender": "+123456789"
+      },
+      "extracted_content": {
+        "text": "TEST MESSAGE",
+        "sender": "+123456789"
+      }
+    },
+    "processed": true,
+    "id": 2,
+    "processing_result": {
+      "status": "error",
+      "message": "Invalid format. Expected: DATASETCODE PERIOD ORGUNIT VALUES..."
+    }
+  },
+  {
     "timestamp": "2025-06-23T09:09:53.305700",
     "data": {
       "raw_data": {
