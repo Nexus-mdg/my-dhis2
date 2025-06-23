@@ -420,6 +420,39 @@ class DHIS2SurveillanceSetup:
             self.log_error(f"Exception creating SMS notification: {str(e)}")
             return None
 
+    def create_sms_gateway(self):
+        """Create SMS gateway configuration in DHIS2"""
+        self.log("Creating SMS Gateway configuration")
+
+        # The genericHttpGateway configuration needs these specific fields
+        gateway_data = {
+            "uid": None,
+            "name": "Local SMS Gateway",
+            "username": "",
+            "password": "",
+            "urlTemplate": "http://sms-gateway:8082/api/sms/receive",
+            "sendUrlParameters": False,
+            "contentType": "APPLICATION_JSON",
+            "useGet": False,
+            "configurationTemplate": "GENERIC_HTTP"
+        }
+
+        # Check if SMS gateway exists
+        try:
+            response = self.session.get(f"{self.base_url}/api/gateways")
+            if response.status_code == 200:
+                result = response.json()
+                gateways = result.get('gateways', [])
+                for gateway in gateways:
+                    if gateway.get('name') == "Local SMS Gateway":
+                        self.log_success(f"SMS Gateway already exists (ID: {gateway.get('uid')})")
+                        return gateway.get('uid')
+        except Exception as e:
+            self.log(f"Error checking existing SMS gateway: {str(e)}")
+
+        # Create SMS gateway
+        return self.api_request('POST', 'gateways/genericHttp', gateway_data, "SMS Gateway")
+
     def verify_metadata(self, metadata_ids):
         """
         Verify that all metadata components have been created successfully
@@ -529,6 +562,9 @@ class DHIS2SurveillanceSetup:
 
             notification_id = self.create_sms_notification(phone_attr_id, stage_id)
 
+            # Create SMS gateway config - the missing step!
+            gateway_id = self.create_sms_gateway()
+
             # Verify all metadata components
             metadata_ids = {
                 "organisation_unit": ou_id,
@@ -541,7 +577,8 @@ class DHIS2SurveillanceSetup:
                 "disease_data_element": disease_id,
                 "program": program_id,
                 "program_stage": stage_id,
-                "notification_template": notification_id
+                "notification_template": notification_id,
+                "sms_gateway": gateway_id
             }
 
             verification_successful = self.verify_metadata(metadata_ids)
@@ -554,6 +591,7 @@ class DHIS2SurveillanceSetup:
             self.log(f"Patient TET: {tet_id}")
             self.log(f"Program: {program_id}")
             self.log(f"SMS Template: {notification_id}")
+            self.log(f"SMS Gateway: {gateway_id}")
             print()
             self.log("Test Instructions:")
             self.log(f"1. Go to: {self.base_url}/dhis-web-tracker-capture")
