@@ -1,0 +1,33 @@
+[
+  {
+    "timestamp": "2025-06-23T09:09:53.305700",
+    "data": {
+      "raw_data": {
+        "text": "TEST 202401 OU001 100",
+        "originator": "+1234567890",
+        "recipient": "dhis2"
+      },
+      "extracted_content": {
+        "text": "TEST 202401 OU001 100",
+        "originator": "+1234567890",
+        "recipient": "dhis2"
+      }
+    },
+    "processed": true,
+    "id": 1,
+    "processing_result": {
+      "status": "success",
+      "message": "Data received for TEST period 202401",
+      "processed_data": {
+        "dataset_code": "TEST",
+        "period": "202401",
+        "org_unit": "OU001",
+        "values": [
+          "100"
+        ],
+        "sender": "+1234567890",
+        "status": "parsed"
+      }
+    }
+  }
+]
