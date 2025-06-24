@@ -10,12 +10,10 @@ EXTERNAL_NETWORK = dhis2-external-net
 
 create-network:
 	@echo "Creating external network $(EXTERNAL_NETWORK) if it does not exist yet..."
-	@if ! docker network ls | grep -q $(EXTERNAL_NETWORK); then \
-		docker network create --driver overlay --attachable $(EXTERNAL_NETWORK); \
-		echo "External network $(EXTERNAL_NETWORK) created successfully"; \
-	else \
-		echo "External network $(EXTERNAL_NETWORK) already exists"; \
-	fi
+	@docker network inspect $(EXTERNAL_NETWORK) >/dev/null 2>&1 || \
+		docker network create --driver overlay --attachable $(EXTERNAL_NETWORK) || \
+		echo "Network creation attempt completed"
+	@echo "External network check completed"
 
 init-secrets:
 	@echo "Creating Docker Swarm secrets from files in ./secrets directory..."
@@ -51,7 +49,7 @@ deploy: init-secrets create-network
 	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
-redeploy: remove volume-destroy create-network
+redeploy: remove volume-destroy
 	@echo "Redeploying stack without creating secrets..."
 	docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
@@ -64,6 +62,12 @@ remove:
 	docker stack rm $(STACK_NAME)
 	@echo "Removing Docker Swarm secrets..."
 	docker secret rm postgres-user postgres-password postgres-db credentials || true
+	@echo "Waiting for stack to be removed (5 seconds)..."
+	@sleep 5
+	@echo "Removing external network if it exists..."
+	@docker network inspect $(EXTERNAL_NETWORK) >/dev/null 2>&1 && \
+		docker network rm $(EXTERNAL_NETWORK) || \
+		echo "Network was already removed or doesn't exist"
 
 update:
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
