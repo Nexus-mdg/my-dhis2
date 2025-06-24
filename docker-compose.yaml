@@ -64,6 +64,9 @@ services:
       - "9443:8443"
     depends_on:
       - db
+    networks:
+      - default
+      - dhis2-external
     deploy:
       replicas: 1
       resources:
@@ -102,70 +105,9 @@ services:
       restart_policy:
         condition: on-failure
         max_attempts: 3
-
-  init:
-    build:
-      context: ./src
-      dockerfile: Dockerfile
-    image: dhis2-init
-    volumes:
-      - "./src:/app"
-      - "./src/secrets:/app/secrets"
-    environment:
-      - DHIS2_URL=https://dhis2:8443
-      - DHIS2_USERNAME_FILE=/run/secrets/admin-credentials
-      - DHIS2_PASSWORD_FILE=/run/secrets/admin-credentials
-    secrets:
-      - source: dhis2-admin-credentials
-        target: admin-credentials
-      - source: dhis2-token
-        target: dhis2-token
     depends_on:
-      - dhis2
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: '0.3'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-      restart_policy:
-        condition: none
+      - adminer
 
-
-  notifications_rcvr:
-    image: python:3.9-slim
-    volumes:
-      - "./notifications:/app"
-    working_dir: /app
-    ports:
-      - "8080:8080"  # Add this line
-    command: >
-      bash -c "apt-get update && apt-get install -y curl && 
-      echo 'Waiting for DHIS2 to be ready...' && 
-      until curl -k -s https://dhis2:8443 > /dev/null; do 
-        echo 'DHIS2 not ready yet, waiting 10 seconds...' && 
-        sleep 10; 
-      done && 
-      echo 'DHIS2 is ready, running notification server...' && 
-      pip install -r requirements.txt && 
-      python server.py"
-    depends_on:
-      - dhis2
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: '0.3'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-      restart_policy:
-        condition: on-failure  # Change from 'none'
-        max_attempts: 3
 
 volumes:
   fileResource:
@@ -178,6 +120,10 @@ volumes:
 networks:
   default:
     driver: overlay
+  dhis2-external:
+    name: dhis2-external-net
+    driver: overlay
+    attachable: true
 
 secrets:
   postgres-user:
@@ -188,7 +134,3 @@ secrets:
     file: ./secrets/postgres-db
   credentials:
     file: ./secrets/credentials
-  dhis2-admin-credentials:
-    file: ./secrets/dhis2-admin-credentials
-  dhis2-token:
-    file: ./secrets/dhis2-token

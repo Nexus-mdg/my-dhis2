@@ -3,9 +3,19 @@
 # Variables
 SWARM_FILE = docker-compose.yaml
 STACK_NAME = dhis2
+EXTERNAL_NETWORK = dhis2-external-net
 
 # Docker Swarm Commands
-.PHONY: deploy redeploy remove update rebuild init-secrets
+.PHONY: deploy redeploy remove update rebuild init-secrets create-network
+
+create-network:
+	@echo "Creating external network $(EXTERNAL_NETWORK) if it does not exist yet..."
+	@if ! docker network ls | grep -q $(EXTERNAL_NETWORK); then \
+		docker network create --driver overlay --attachable $(EXTERNAL_NETWORK); \
+		echo "External network $(EXTERNAL_NETWORK) created successfully"; \
+	else \
+		echo "External network $(EXTERNAL_NETWORK) already exists"; \
+	fi
 
 init-secrets:
 	@echo "Creating Docker Swarm secrets from files in ./secrets directory..."
@@ -35,18 +45,20 @@ init-secrets:
 	fi
 	@echo "All secrets created successfully"
 
-deploy: init-secrets
+deploy: init-secrets create-network
 	docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
 	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
-redeploy: remove
+redeploy: remove volume-destroy create-network
 	@echo "Redeploying stack without creating secrets..."
 	docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
 	@sleep 5
-	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
+	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME) || echo "Redeployment failed. Ensure the stack is removed first."
+	@sleep 5
+	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME) || echo "Redeployment failed. Ensure the stack is removed first."
 
 remove:
 	docker stack rm $(STACK_NAME)
@@ -80,7 +92,7 @@ volume-prune:
 	fi
 
 volume-destroy:
-	docker volume rm -f fileResource logs postgresql_data
+	docker volume rm -f dhis2_fileResource dhis2_logs dhis2_postgresql_data || echo "Volumes not found or already removed"
 
 # Cleanup
 .PHONY: clean
