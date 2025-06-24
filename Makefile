@@ -82,7 +82,7 @@ volume-prune:
 	fi
 
 volume-destroy:
-	docker volume rm -f dhis2_fileResource dhis2_logs dhis2_postgresql_data
+	docker volume rm -f dhis2_fileResource dhis2_logs dhis2_postgresql_data || echo "Volumes not found or already removed"
 
 # Cleanup
 .PHONY: clean
