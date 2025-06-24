@@ -64,6 +64,9 @@ services:
       - "9443:8443"
     depends_on:
       - db
+    networks:
+      - default
+      - dhis2-external
     deploy:
       replicas: 1
       resources:
@@ -117,6 +120,10 @@ volumes:
 networks:
   default:
     driver: overlay
+  dhis2-external:
+    name: dhis2-external-net
+    driver: overlay
+    attachable: true
 
 secrets:
   postgres-user:
