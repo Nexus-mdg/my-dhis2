@@ -5,6 +5,64 @@ SWARM_FILE = docker-compose.yaml
 STACK_NAME = dhis2
 EXTERNAL_NETWORK = dhis2-external-net
 
+# Download URLs and file names
+TOMCAT_VERSION = 9.0.106
+TOMCAT_URL = https://dlcdn.apache.org/tomcat/tomcat-9/v$(TOMCAT_VERSION)/bin/apache-tomcat-$(TOMCAT_VERSION).tar.gz
+TOMCAT_FILE = shared/apache-tomcat-$(TOMCAT_VERSION).tar.gz
+
+JDK_VERSION = 17.0.2
+JDK_URL = https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_linux-x64_bin.tar.gz
+JDK_FILE = shared/openjdk-$(JDK_VERSION)_linux-x64_bin.tar.gz
+
+DHIS2_VERSION = 41.4.0
+DHIS2_URL = https://releases.dhis2.org/41/dhis2-stable-$(DHIS2_VERSION).war
+DHIS2_FILE = shared/dhis2.war
+
+# Download Commands
+.PHONY: download-tomcat download-jdk download-dhis2 download-all extract-tomcat extract-jdk setup-java setup-all
+
+download-tomcat:
+	@echo "Downloading Tomcat $(TOMCAT_VERSION)..."
+	@mkdir -p shared
+	wget --no-check-certificate -O $(TOMCAT_FILE) $(TOMCAT_URL)
+	@echo "Downloaded Tomcat $(TOMCAT_VERSION) to shared directory"
+
+download-jdk:
+	@echo "Downloading OpenJDK $(JDK_VERSION)..."
+	@mkdir -p shared
+	wget --no-check-certificate -O $(JDK_FILE) $(JDK_URL)
+	@echo "Downloaded OpenJDK $(JDK_VERSION) to shared directory"
+
+download-dhis2:
+	@echo "Downloading DHIS2 $(DHIS2_VERSION)..."
+	@mkdir -p shared
+	wget --no-check-certificate -O $(DHIS2_FILE) $(DHIS2_URL)
+	@echo "Downloaded DHIS2 $(DHIS2_VERSION) as dhis2.war to shared directory"
+
+download-all: download-tomcat download-jdk download-dhis2
+	@echo "All downloads completed"
+
+extract-tomcat: download-tomcat
+	@echo "Extracting Tomcat $(TOMCAT_VERSION)..."
+	@cd shared && tar -xzf apache-tomcat-$(TOMCAT_VERSION).tar.gz
+	@echo "Tomcat extracted to shared/apache-tomcat-$(TOMCAT_VERSION)"
+
+extract-jdk: download-jdk
+	@echo "Extracting OpenJDK $(JDK_VERSION)..."
+	@cd shared && tar -xzf openjdk-$(JDK_VERSION)_linux-x64_bin.tar.gz
+	@echo "JDK extracted to shared/jdk-$(JDK_VERSION)"
+
+setup-java: extract-tomcat extract-jdk
+	@echo "Java environment setup completed"
+	@echo "Tomcat location: shared/apache-tomcat-$(TOMCAT_VERSION)"
+	@echo "JDK location: shared/jdk-$(JDK_VERSION)"
+
+setup-all: extract-tomcat extract-jdk download-dhis2
+	@echo "Complete DHIS2 environment setup completed"
+	@echo "Tomcat location: shared/apache-tomcat-$(TOMCAT_VERSION)"
+	@echo "JDK location: shared/jdk-$(JDK_VERSION)"
+	@echo "DHIS2 war file: shared/dhis2.war"
+
 # Docker Swarm Commands
 .PHONY: deploy redeploy remove update rebuild init-secrets create-network
 
