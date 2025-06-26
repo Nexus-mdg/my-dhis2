@@ -19,23 +19,23 @@ DHIS2_URL = https://releases.dhis2.org/41/dhis2-stable-$(DHIS2_VERSION).war
 DHIS2_FILE = shared/dhis2.war
 
 # Download Commands
-.PHONY: download-tomcat download-jdk download-dhis2 download-all extract-tomcat extract-jdk setup-java setup-all
+.PHONY: shared download-tomcat download-jdk download-dhis2 download-all extract-tomcat extract-jdk setup-java setup-all
 
-download-tomcat:
-	@echo "Downloading Tomcat $(TOMCAT_VERSION)..."
+shared:
 	@mkdir -p shared
+
+download-tomcat: shared
+	@echo "Downloading Tomcat $(TOMCAT_VERSION)..."
 	wget --no-check-certificate -O $(TOMCAT_FILE) $(TOMCAT_URL)
 	@echo "Downloaded Tomcat $(TOMCAT_VERSION) to shared directory"
 
-download-jdk:
+download-jdk: shared
 	@echo "Downloading OpenJDK $(JDK_VERSION)..."
-	@mkdir -p shared
 	wget --no-check-certificate -O $(JDK_FILE) $(JDK_URL)
 	@echo "Downloaded OpenJDK $(JDK_VERSION) to shared directory"
 
-download-dhis2:
+download-dhis2: shared
 	@echo "Downloading DHIS2 $(DHIS2_VERSION)..."
-	@mkdir -p shared
 	wget --no-check-certificate -O $(DHIS2_FILE) $(DHIS2_URL)
 	@echo "Downloaded DHIS2 $(DHIS2_VERSION) as dhis2.war to shared directory"
 
