@@ -57,7 +57,7 @@ setup-java: extract-tomcat extract-jdk
 	@echo "Tomcat location: shared/apache-tomcat-$(TOMCAT_VERSION)"
 	@echo "JDK location: shared/jdk-$(JDK_VERSION)"
 
-setup-all: extract-tomcat extract-jdk download-dhis2
+setup-all: setup-java download-dhis2
 	@echo "Complete DHIS2 environment setup completed"
 	@echo "Tomcat location: shared/apache-tomcat-$(TOMCAT_VERSION)"
 	@echo "JDK location: shared/jdk-$(JDK_VERSION)"
