@@ -117,7 +117,8 @@ init-secrets:
 	@echo "All secrets created successfully"
 
 deploy: init-secrets create-network
-	docker compose -f $(SWARM_FILE) build
+	@echo "Building images..."
+	COMPOSE_IGNORE_ORPHANS=1 docker compose -f $(SWARM_FILE) build
 	@echo "Waiting for swarm cluster to fully stop (5 seconds)..."
 	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
