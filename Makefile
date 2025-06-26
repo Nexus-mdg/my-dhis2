@@ -64,7 +64,22 @@ setup-all: setup-java download-dhis2
 	@echo "DHIS2 war file: shared/dhis2.war"
 
 # Docker Swarm Commands
-.PHONY: deploy redeploy remove update rebuild init-secrets create-network
+.PHONY: swarm-init deploy redeploy remove update rebuild init-secrets create-network
+
+swarm-init:
+	@echo "Initializing Docker Swarm..."
+	@IP=$$(ip route get 1.1.1.1 2>/dev/null | grep -oP 'src \K[^ ]+' | head -1); \
+	if [ -z "$$IP" ]; then \
+		IP=$$(hostname -I | awk '{print $$1}' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$$'); \
+	fi; \
+	if [ -n "$$IP" ]; then \
+		echo "Using IP address: $$IP"; \
+		docker swarm init --advertise-addr $$IP || echo "Swarm already initialized or initialization failed"; \
+	else \
+		echo "Could not determine IP address. Please run manually: docker swarm init --advertise-addr <your-ip>"; \
+		exit 1; \
+	fi
+	@echo "Docker Swarm initialization completed"
 
 create-network:
 	@echo "Creating external network $(EXTERNAL_NETWORK) if it does not exist yet..."
