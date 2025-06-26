@@ -7,42 +7,78 @@ This document provides instructions for deploying the DHIS2 application using Do
 Before deploying with Docker Swarm, ensure you have:
 
 1. Docker Engine installed on all nodes (version 19.03.0+)
-2. Docker Swarm initialized on the manager node
-3. All required files in the shared directory (JDK, Tomcat, DHIS2 WAR)
-4. Sufficient resources on your nodes to meet the defined resource requirements
+2. `wget` installed for downloading components
+3. Sufficient resources on your nodes to meet the defined resource requirements
+4. Network connectivity to download required components
 
-## Initializing Docker Swarm
+## Quick Start
 
-If you haven't already initialized a swarm, run the following on the manager node:
+The deployment process has been streamlined with Makefile commands. Follow these steps:
 
-```bash
-docker swarm init --advertise-addr <MANAGER-IP>
-```
-
-To add worker nodes to the swarm, run the command provided in the output of the above command on each worker node.
-
-## Building and Deploying the Stack
-
-### Building the Images
-
-Before deploying the stack, build the required images:
+### 1. Initialize Docker Swarm
 
 ```bash
-# Build the images without starting containers
-docker compose -f docker-compose.swarm.yaml build
+make swarm-init
 ```
 
-### Deploying the Stack
+This will automatically:
+- Detect the best IP address for your system
+- Handle multiple network interfaces and IPv6 conflicts
+- Initialize Docker Swarm with the appropriate settings
 
-To deploy the entire stack to the swarm:
+### 2. Download and Setup Components
 
 ```bash
-docker stack deploy -c docker-compose.swarm.yaml dhis2
+make setup-all
 ```
 
-This will create a stack named "dhis2" with all the services defined in the docker-compose.swarm.yaml file.
+This will automatically:
+- Download Tomcat 9.0.106
+- Download OpenJDK 17.0.2
+- Download DHIS2 41.4.0 war file
+- Extract Tomcat and JDK to the shared directory
+- Rename the DHIS2 war file to `dhis2.war`
 
-### Checking Stack Status
+### 3. Deploy the Stack
+
+```bash
+make deploy
+```
+
+This will automatically:
+- Create Docker Swarm secrets from files in the `./secrets` directory
+- Create the external network if it doesn't exist
+- Build the required images
+- Deploy the complete DHIS2 stack
+
+## Individual Commands
+
+If you need more control, you can run individual commands:
+
+### Download Components Separately
+```bash
+make download-tomcat    # Download Tomcat only
+make download-jdk       # Download JDK only
+make download-dhis2     # Download DHIS2 war file only
+make download-all       # Download all components
+```
+
+### Setup Java Environment
+```bash
+make setup-java         # Extract Tomcat and JDK only
+```
+
+### Docker Swarm Management
+```bash
+make swarm-init         # Initialize Docker Swarm
+make deploy             # Deploy the stack
+make redeploy           # Redeploy (removes volumes)
+make remove             # Remove the stack and secrets
+make update             # Update the stack
+make rebuild            # Rebuild images and update
+```
+
+## Checking Stack Status
 
 To check the status of your deployed stack:
 
@@ -69,13 +105,10 @@ docker service scale dhis2_dhis2=2
 
 ### Updating Services
 
-To update a service with a new image or configuration:
-
-1. Make changes to the docker-compose.swarm.yaml file
-2. Redeploy the stack:
+To update the stack after making changes:
 
 ```bash
-docker stack deploy -c docker-compose.swarm.yaml dhis2
+make update
 ```
 
 ### Stopping the Stack
@@ -83,174 +116,63 @@ docker stack deploy -c docker-compose.swarm.yaml dhis2
 To stop and remove the entire stack:
 
 ```bash
-docker stack rm dhis2
+make remove
 ```
 
-### Rebuilding Services
+This will:
+- Remove the Docker stack
+- Remove Docker Swarm secrets
+- Remove the external network
+- Clean up resources
 
-To rebuild and update a specific service:
-
-1. Rebuild the image:
+### Volume Management
 
 ```bash
-docker compose -f docker-compose.swarm.yaml build <service-name>
+make volume-list        # List volumes used by the stack
+make volume-prune       # Remove unused volumes (with confirmation)
+make volume-destroy     # Remove specific DHIS2 volumes
 ```
 
-2. Push the image to a registry if using multiple nodes:
+### Complete Cleanup
 
 ```bash
-docker compose -f docker-compose.swarm.yaml push <service-name>
+make clean
 ```
 
-3. Force update the service:
+This will remove the stack, secrets, and secret files in the root directory.
 
-```bash
-docker service update --force dhis2_<service-name>
+## Component Versions
+
+The following versions are automatically downloaded:
+
+- **Tomcat**: 9.0.106
+- **OpenJDK**: 17.0.2
+- **DHIS2**: 41.4.0
+
+## Directory Structure
+
+After running `make setup-all`, your directory will contain:
+
 ```
-
-## Volume Management
-
-### Listing Volumes
-
-To list all volumes used by the stack:
-
-```bash
-docker volume ls | grep dhis2
-```
-
-### Backing Up Volumes
-
-To back up the PostgreSQL data volume:
-
-```bash
-# Create a temporary container to access the volume
-docker run --rm -v dhis2_postgresql_data:/source -v $(pwd):/backup ubuntu tar -czvf /backup/postgresql_backup.tar.gz -C /source .
-```
-
-### Pruning Volumes
-
-To remove unused volumes (be careful as this will delete data):
-
-```bash
-# Remove all unused volumes
-docker volume prune
-
-# Remove specific volumes (after stack is removed)
-docker volume rm dhis2_postgresql_data dhis2_fileResource dhis2_logs
-```
-
-## Resource Management
-
-The docker-compose.swarm.yaml file defines resource limits for each service:
-
-- **db**: 1.0 CPU, 1GB memory
-- **adminer**: 0.3 CPU, 128MB memory
-- **dhis2**: 2.0 CPU, 4GB memory
-- **ingress**: 0.5 CPU, 256MB memory
-- **init**: 0.3 CPU, 256MB memory (one-time execution service)
-
-To monitor resource usage:
-
-```bash
-docker stats $(docker ps --format={{.Names}})
+shared/
+├── apache-tomcat-9.0.106.tar.gz    # Downloaded Tomcat archive
+├── apache-tomcat-9.0.106/          # Extracted Tomcat
+├── openjdk-17.0.2_linux-x64_bin.tar.gz  # Downloaded JDK archive
+├── jdk-17.0.2/                     # Extracted JDK
+└── dhis2.war                       # DHIS2 application
 ```
 
 ## Troubleshooting
 
-### Viewing Logs
+### Network Issues
+If you encounter network conflicts, the Makefile handles this automatically by using `COMPOSE_IGNORE_ORPHANS=1`.
 
-To view logs for a specific service:
+### Multiple IP Addresses
+The `swarm-init` command automatically detects the best IP address and handles IPv6 conflicts.
 
-```bash
-docker service logs dhis2_dhis2
-```
-
-### Checking Service Health
-
-To check the health of services:
+### Help
+For a complete list of available commands:
 
 ```bash
-docker service ps dhis2_dhis2
-```
-
-### Common Issues
-
-1. **Services not starting**: Check logs and ensure resource limits are not too restrictive
-2. **Network connectivity issues**: Ensure overlay network is properly configured
-3. **Volume mounting issues**: Check if volumes are properly created and accessible
-
-## Security Considerations
-
-### Managing Secrets
-
-The stack uses Docker Secrets to securely manage sensitive information. All secret files are stored in the `secrets` directory to keep them organized and separate from the rest of the project.
-
-The stack uses Docker Swarm secrets to securely manage sensitive information for all services:
-
-1. **PostgreSQL Database Credentials**: Used by the PostgreSQL container:
-   - `secrets/postgres-user`: Database username
-   - `secrets/postgres-password`: Database password
-   - `secrets/postgres-db`: Database name
-
-2. **DHIS2 Application Credentials**: Used by the DHIS2 container:
-   - `secrets/credentials`: Contains three lines:
-     - Line 1: Database username (same as in `postgres-user`)
-     - Line 2: Database password (same as in `postgres-password`)
-     - Line 3: Encryption password (unique to this file)
-
-3. **DHIS2 Admin Credentials**: Used by the init service:
-   - `secrets/dhis2-admin-credentials`: Contains two lines:
-     - Line 1: Admin username (default: admin)
-     - Line 2: Admin password (default: district)
-
-To create or update these secrets:
-
-```bash
-# Create the secrets directory if it doesn't exist
-mkdir -p secrets
-
-# Create PostgreSQL secret files
-echo "your_username" > secrets/postgres-user
-echo "your_secure_password" > secrets/postgres-password
-echo "your_database_name" > secrets/postgres-db
-
-# Create DHIS2 credentials file
-echo "your_username" > secrets/credentials
-echo "your_secure_password" >> secrets/credentials
-echo "your_encryption_password" >> secrets/credentials
-
-# Create DHIS2 admin credentials file for init service
-echo "admin" > secrets/dhis2-admin-credentials
-echo "district" >> secrets/dhis2-admin-credentials
-
-# Update the stack to use the new secrets
-docker stack deploy -c docker-compose.swarm.yaml dhis2
-```
-
-To view the current secrets:
-
-```bash
-docker secret ls
-```
-
-To remove a secret (requires removing the stack first):
-
-```bash
-docker stack rm dhis2
-docker secret rm postgres-user postgres-password postgres-db credentials dhis2-admin-credentials
-# Also remove the local secret files if no longer needed
-rm -f secrets/postgres-user secrets/postgres-password secrets/postgres-db secrets/credentials secrets/dhis2-admin-credentials
-```
-
-### General Security Recommendations
-
-1. Use Docker secrets for all sensitive information (credentials, certificates)
-2. Implement network segmentation using overlay networks
-3. Regularly update base images and dependencies
-4. Implement proper access controls for the Docker daemon
-
-## Get swarm IP
-
-```bash
-docker network inspect docker_gwbridge
+make help
 ```
