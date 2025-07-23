@@ -4,7 +4,7 @@ This repository provides a Makefile to simplify the management of the DHIS2 Dock
 
 For detailed information about the DHIS2 Docker Swarm environment itself, please refer to [SWARM.md](SWARM.md).
 
-**Only for testing, do not use for production environments!**
+> **Disclaimer:** This codebase is intended for testing and demonstration purposes only. It is not designed or reviewed for production use. Use at your own risk.
 
 ## Prerequisites
 
