@@ -1,5 +1,11 @@
 # DHIS2 Docker Swarm Environment Management
 
+> **Note:** For a seamless first-time setup, add the following entries to your `/etc/hosts` file:
+>
+>     127.0.0.1 dhis2.local dhis2.local.sync
+>
+> This will allow you to access the DHIS2 and DHIS2 Sync services directly. If you do not add these, you will need to use the exposed ports (e.g., 9443, 9444) to access the services in your browser.
+
 This repository provides a Makefile to simplify the management of the DHIS2 Docker Swarm environment. The Makefile includes commands for Docker Swarm operations, as well as volume management and cleanup.
 
 For detailed information about the DHIS2 Docker Swarm environment itself, please refer to [SWARM.md](SWARM.md).
