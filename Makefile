@@ -64,7 +64,7 @@ setup-all: setup-java download-dhis2
 	@echo "DHIS2 war file: shared/dhis2.war"
 
 # Docker Swarm Commands
-.PHONY: swarm-init deploy redeploy remove update rebuild init-secrets create-network
+.PHONY: swarm-init deploy redeploy remove update rebuild init-secrets create-network down
 
 swarm-init:
 	@echo "Initializing Docker Swarm..."
@@ -203,3 +203,8 @@ help:
 	@echo ""
 	@echo "Help:"
 	@echo "  make help              - Show this help message"
+
+down:
+	@echo "Removing Docker Swarm stack $(STACK_NAME)..."
+	docker stack rm $(STACK_NAME)
+	@echo "Docker Swarm stack removed."
