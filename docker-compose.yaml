@@ -52,7 +52,6 @@ x-db-base: &db-base
       condition: on-failure
       max_attempts: 3
 
-
 services:
 
   db:
@@ -60,13 +59,12 @@ services:
     ports:
       - "5432:5432"
 
-  dhis2:
-    <<: *dhis2-base
+  db-sync:
+    <<: *db-base
+    volumes:
+      - "postgresql_data_sync:/var/lib/postgresql/data"
     ports:
-      # HTTP port removed to enforce HTTPS only
-      - "9443:8443"
-    depends_on:
-      - db
+      - "5434:5432"
 
   adminer:
     image: adminer
@@ -87,6 +85,23 @@ services:
         condition: on-failure
         max_attempts: 3
 
+  dhis2:
+    <<: *dhis2-base
+    ports:
+      # HTTP port removed to enforce HTTPS only
+      - "9443:8443"
+    depends_on:
+      - db
+
+  dhis2-sync:
+    <<: *dhis2-base
+    volumes:
+      - "fileResource_sync:/opt/dhis2/files"
+      - "logs_sync:/opt/dhis2/logs"
+    ports:
+      - "9444:8443"
+    depends_on:
+      - db-sync
 
   ingress:
     image: dhis2-ingress
@@ -99,6 +114,7 @@ services:
       - "80:80"    # HTTP (redirects to HTTPS)
       - "443:443"  # HTTPS for DHIS2
       - "444:444"  # HTTPS for Adminer
+      - "445:445"  # HTTPS for DHIS2 sync
       - "8000:8000" # HTTP file sharing (redirects to HTTPS)
       - "8443:8443" # HTTPS file sharing
     deploy:
@@ -116,13 +132,18 @@ services:
     depends_on:
       - adminer
 
-
 volumes:
   fileResource:
     driver: local
+  fileResource_sync:
+    driver: local
   logs:
     driver: local
+  logs_sync:
+    driver: local
   postgresql_data:
+    driver: local
+  postgresql_data_sync:
     driver: local
 
 networks:
