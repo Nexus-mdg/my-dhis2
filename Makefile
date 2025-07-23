@@ -6,7 +6,7 @@ STACK_NAME = dhis2
 EXTERNAL_NETWORK = dhis2-external-net
 
 # Download URLs and file names
-TOMCAT_VERSION = 9.0.106
+TOMCAT_VERSION = 9.0.107
 TOMCAT_URL = https://dlcdn.apache.org/tomcat/tomcat-9/v$(TOMCAT_VERSION)/bin/apache-tomcat-$(TOMCAT_VERSION).tar.gz
 TOMCAT_FILE = shared/apache-tomcat-$(TOMCAT_VERSION).tar.gz
 
