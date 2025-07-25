@@ -1,0 +1,144 @@
+x-dhis2-base: &dhis2-base
+  image: dhis2-app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  tty: true
+  env_file:
+    - ./.env.swarm
+  volumes:
+    - "fileResource:/opt/dhis2/files"
+    - "logs:/opt/dhis2/logs"
+  secrets:
+    - credentials
+  networks:
+    - default
+    - dhis2-external
+  deploy:
+    replicas: 1
+    resources:
+      limits:
+        cpus: '2.0'
+        memory: 4G
+      reservations:
+        cpus: '1.0'
+        memory: 2G
+    restart_policy:
+      condition: on-failure
+      max_attempts: 3
+
+x-db-base: &db-base
+  image: postgis/postgis:12-3.3
+  volumes:
+    - "postgresql_data:/var/lib/postgresql/data"
+  environment:
+    - POSTGRES_USER_FILE=/run/secrets/postgres-user
+    - POSTGRES_PASSWORD_FILE=/run/secrets/postgres-password
+    - POSTGRES_DB_FILE=/run/secrets/postgres-db
+  secrets:
+    - postgres-user
+    - postgres-password
+    - postgres-db
+  deploy:
+    replicas: 1
+    resources:
+      limits:
+        cpus: '1.0'
+        memory: 1G
+      reservations:
+        cpus: '0.5'
+        memory: 512M
+    restart_policy:
+      condition: on-failure
+      max_attempts: 3
+
+
+services:
+
+  db:
+    <<: *db-base
+    ports:
+      - "5432:5432"
+
+  dhis2:
+    <<: *dhis2-base
+    ports:
+      # HTTP port removed to enforce HTTPS only
+      - "9443:8443"
+    depends_on:
+      - db
+
+  adminer:
+    image: adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+
+  ingress:
+    image: dhis2-ingress
+    build:
+      context: ./ingress
+      dockerfile: Dockerfile
+    volumes:
+      - "./shared:/usr/share/nginx/shared"
+    ports:
+      - "80:80"    # HTTP (redirects to HTTPS)
+      - "443:443"  # HTTPS for DHIS2
+      - "444:444"  # HTTPS for Adminer
+      - "8000:8000" # HTTP file sharing (redirects to HTTPS)
+      - "8443:8443" # HTTPS file sharing
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    depends_on:
+      - adminer
+
+
+volumes:
+  fileResource:
+    driver: local
+  logs:
+    driver: local
+  postgresql_data:
+    driver: local
+
+networks:
+  default:
+    driver: overlay
+  dhis2-external:
+    name: dhis2-external-net
+    driver: overlay
+    attachable: true
+
+secrets:
+  postgres-user:
+    file: ./secrets/postgres-user
+  postgres-password:
+    file: ./secrets/postgres-password
+  postgres-db:
+    file: ./secrets/postgres-db
+  credentials:
+    file: ./secrets/credentials
