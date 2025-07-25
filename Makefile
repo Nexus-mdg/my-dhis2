@@ -2,6 +2,7 @@
 
 # Variables
 SWARM_FILE = docker-compose.yaml
+LOCAL_FILE = docker-compose.local.yml
 STACK_NAME = dhis2
 EXTERNAL_NETWORK = dhis2-external-net
 
@@ -154,6 +155,19 @@ rebuild:
 	@sleep 5
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
+# Local Development Commands
+.PHONY: up down
+
+up:
+	@echo "Starting local development environment..."
+	docker compose -f $(LOCAL_FILE) up -d
+	@echo "Local development environment started with docker-compose.local.yml"
+
+down:
+	@echo "Stopping local development environment..."
+	docker compose -f $(LOCAL_FILE) down
+	@echo "Local development environment stopped"
+
 # Volume Management
 .PHONY: volume-list volume-prune
 
@@ -185,6 +199,10 @@ clean: remove
 
 help:
 	@echo "DHIS2 Docker Environment Management"
+	@echo ""
+	@echo "Local Development Commands:"
+	@echo "  make up          - Start the local development environment with docker-compose.local.yml"
+	@echo "  make down        - Stop the local development environment"
 	@echo ""
 	@echo "Docker Swarm Commands:"
 	@echo "  make init-secrets - Create Docker Swarm secrets from files in ./secrets directory"
