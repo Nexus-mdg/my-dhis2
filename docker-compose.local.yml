@@ -33,12 +33,33 @@ services:
     ports:
       - "5432:5432"
 
+  db-sync:
+    <<: *db-base
+    profiles: ["sync"]
+    volumes:
+      - "postgresql_data_sync:/var/lib/postgresql/data"
+    ports:
+      - "5434:5432"
+
+
   dhis2:
     <<: *dhis2-base
     ports:
       - "9443:8443"
     depends_on:
       - db
+
+  dhis2-sync:
+    <<: *dhis2-base
+    profiles: ["sync"]
+    volumes:
+      - "fileResource_sync:/opt/dhis2/files"
+      - "logs_sync:/opt/dhis2/logs"
+    ports:
+      - "9444:8443"
+    depends_on:
+      - db-sync
+
 
   adminer:
     image: adminer
@@ -62,6 +83,7 @@ services:
       - "444:444"  # HTTPS for Adminer
       - "8000:8000" # HTTP file sharing (redirects to HTTPS)
       - "8443:8443" # HTTPS file sharing
+      - "445:445"  # HTTPS for DHIS2 sync (if)
     depends_on:
       - adminer
     networks:
@@ -71,6 +93,9 @@ volumes:
   fileResource:
   logs:
   postgresql_data:
+  fileResource_sync:
+  logs_sync:
+  postgresql_data_sync:
 
 networks:
   dhis2-network:

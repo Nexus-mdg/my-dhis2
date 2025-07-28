@@ -156,7 +156,7 @@ rebuild:
 	docker stack deploy -c $(SWARM_FILE) $(STACK_NAME)
 
 # Local Development Commands
-.PHONY: up down
+.PHONY: up down sync-up sync-down
 
 up:
 	@echo "Starting local development environment..."
@@ -167,6 +167,16 @@ down:
 	@echo "Stopping local development environment..."
 	docker compose -f $(LOCAL_FILE) down
 	@echo "Local development environment stopped"
+
+sync-up:
+	@echo "Starting sync services (db-sync and dhis2-sync)..."
+	docker compose -f $(LOCAL_FILE) --profile sync up -d
+	@echo "Sync services started with sync profile"
+
+sync-down:
+	@echo "Stopping sync services..."
+	docker compose -f $(LOCAL_FILE) --profile sync down
+	@echo "Sync services stopped"
 
 # Volume Management
 .PHONY: volume-list volume-prune
@@ -203,6 +213,8 @@ help:
 	@echo "Local Development Commands:"
 	@echo "  make up          - Start the local development environment with docker-compose.local.yml"
 	@echo "  make down        - Stop the local development environment"
+	@echo "  make sync-up     - Start the sync services (db-sync and dhis2-sync)"
+	@echo "  make sync-down   - Stop the sync services"
 	@echo ""
 	@echo "Docker Swarm Commands:"
 	@echo "  make init-secrets - Create Docker Swarm secrets from files in ./secrets directory"
