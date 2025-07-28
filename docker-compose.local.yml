@@ -14,8 +14,6 @@ x-dhis2-base: &dhis2-base
 
 x-db-base: &db-base
   image: postgis/postgis:12-3.3
-  volumes:
-    - "postgresql_data:/var/lib/postgresql/data"
   env_file:
     - ./.env
   environment:
@@ -26,6 +24,8 @@ x-db-base: &db-base
 services:
   db:
     <<: *db-base
+    volumes:
+      - "postgresql_data:/var/lib/postgresql/data"
     networks:
       dhis2-network:
         aliases:
