@@ -6,12 +6,6 @@ x-dhis2-base: &dhis2-base
   tty: true
   env_file:
     - ./.env
-  environment:
-    - DHIS2_DB_HOST=${DHIS2_DB_HOST}
-    - DHIS2_DB_PORT=${DHIS2_DB_PORT}
-    - DHIS2_DB_USER=${DHIS2_DB_USER}
-    - DHIS2_DB_PASSWORD=${DHIS2_DB_PASSWORD}
-    - DHIS2_DB_NAME=${DHIS2_DB_NAME}
   volumes:
     - "fileResource:/opt/dhis2/files"
     - "logs:/opt/dhis2/logs"
@@ -22,10 +16,12 @@ x-db-base: &db-base
   image: postgis/postgis:12-3.3
   volumes:
     - "postgresql_data:/var/lib/postgresql/data"
+  env_file:
+    - ./.env
   environment:
-    - POSTGRES_USER=${DHIS2_DB_USER}
-    - POSTGRES_PASSWORD=${DHIS2_DB_PASSWORD}
-    - POSTGRES_DB=${DHIS2_DB_NAME}
+    - POSTGRES_USER=${DB_USER}
+    - POSTGRES_PASSWORD=${DB_PASSWORD}
+    - POSTGRES_DB=${DB_NAME}
 
 services:
   db:
