@@ -42,7 +42,10 @@ services:
       - "postgresql_data_sync:/var/lib/postgresql/data"
     ports:
       - "5434:5432"
-
+    networks:
+      dhis2-network:
+        aliases:
+          - db-sync
 
   dhis2:
     <<: *dhis2-base
