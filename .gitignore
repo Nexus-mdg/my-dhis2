@@ -5,3 +5,4 @@
 /.env.swarm
 /src/secrets/*
 /secrets/dhis2_credentials_*.txt
+/.env.sync

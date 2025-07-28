@@ -168,6 +168,11 @@ down:
 	docker compose -f $(LOCAL_FILE) down
 	@echo "Local development environment stopped"
 
+down-v:
+	@echo "Stopping local development environment..."
+	docker compose -f $(LOCAL_FILE) down -v
+	@echo "Local development environment stopped"
+
 sync-up:
 	@echo "Starting sync services (db-sync and dhis2-sync)..."
 	docker compose -f $(LOCAL_FILE) --profile sync up -d
@@ -176,6 +181,11 @@ sync-up:
 sync-down:
 	@echo "Stopping sync services..."
 	docker compose -f $(LOCAL_FILE) --profile sync down
+	@echo "Sync services stopped"
+
+sync-down-v:
+	@echo "Stopping sync services..."
+	docker compose -f $(LOCAL_FILE) --profile sync down -v
 	@echo "Sync services stopped"
 
 # Volume Management

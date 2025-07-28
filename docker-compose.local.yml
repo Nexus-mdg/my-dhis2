@@ -36,6 +36,8 @@ services:
   db-sync:
     <<: *db-base
     profiles: ["sync"]
+    env_file:
+      - ./.env.sync
     volumes:
       - "postgresql_data_sync:/var/lib/postgresql/data"
     ports:
@@ -52,6 +54,8 @@ services:
   dhis2-sync:
     <<: *dhis2-base
     profiles: ["sync"]
+    env_file:
+      - ./.env.sync
     volumes:
       - "fileResource_sync:/opt/dhis2/files"
       - "logs_sync:/opt/dhis2/logs"
